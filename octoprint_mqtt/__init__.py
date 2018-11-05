@@ -219,7 +219,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 				safe_last_target_temp   = 0
 				if key in self.lastTemp:
 					safe_last_temp = self.lastTemp[key].get("actual") or 0
-					safe_last_target_temp = self.lastTemp[key].get("actual") or 0
+					safe_last_target_temp = self.lastTemp[key].get("target") or 0
 
 				# some pedantry on the target temp to keep away from float math problems
 				if not safe_last_temp \
