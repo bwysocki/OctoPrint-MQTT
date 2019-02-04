@@ -1,5 +1,5 @@
 $(function() {
-    function MQTTViewModel(parameters) {
+    function MQTTViewModelAWS(parameters) {
 
         var self = this;
 
@@ -23,7 +23,7 @@ $(function() {
     }
 
     ADDITIONAL_VIEWMODELS.push([
-        MQTTViewModel,
+        MQTTViewModelAWS,
         ["settingsViewModel"],
         ["#settings_plugin_mqttawsaws"]
     ]);
