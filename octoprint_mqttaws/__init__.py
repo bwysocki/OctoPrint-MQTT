@@ -10,7 +10,7 @@ import octoprint.plugin
 from octoprint.events import Events
 from octoprint.util import dict_minimal_mergediff
 
-class MqttPlugin(octoprint.plugin.SettingsPlugin,
+class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                  octoprint.plugin.StartupPlugin,
                  octoprint.plugin.ShutdownPlugin,
                  octoprint.plugin.EventHandlerPlugin,
@@ -454,7 +454,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 __plugin_name__ = "MQTTAWS"
 
 def __plugin_load__():
-	plugin = MqttPlugin()
+	plugin = MqttAWSPlugin()
 
 	global __plugin_helpers__
 	__plugin_helpers__ = dict(
