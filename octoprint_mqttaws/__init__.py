@@ -72,7 +72,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ AssetPlugin API
 
 	def get_assets(self):
-		return dict(js=["js/mqtt.js"])
+		return dict(js=["js/mqttaws.js"])
 
 	##~~ StartupPlugin API
 
