@@ -12,7 +12,7 @@ $(function() {
         self.availableProtocols = ko.observableArray(['MQTTv31','MQTTv311']);
 
         self.onBeforeBinding = function () {
-            self.settings = self.global_settings.settings.plugins.mqtt;
+            self.settings = self.global_settings.settings.plugins.mqttaws;
 
             // show credential options if username is set
             self.showUserCredentials(!!self.settings.broker.username());
