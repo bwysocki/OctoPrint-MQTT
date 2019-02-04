@@ -4,7 +4,6 @@ $(function() {
         var self = this;
 
         self.global_settings = parameters[0];
-        console.log('aaaa', parameters)
 
         self.showUserCredentials = ko.observable(false);
         self.showSsl = ko.observable(false);
@@ -14,7 +13,7 @@ $(function() {
 
         self.onBeforeBinding = function () {
             self.settings = self.global_settings.settings.plugins.mqttaws;
-
+            console.log('aaaa', self.settings)
             // show credential options if username is set
             self.showUserCredentials(!!self.settings.broker.username());
 
