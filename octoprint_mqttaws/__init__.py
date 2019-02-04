@@ -66,7 +66,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 
 	def get_template_configs(self):
 		return [
-			dict(type="settings", name="MQTT")
+			dict(type="settings", name="MQTTAWS")
 		]
 
 	##~~ AssetPlugin API
@@ -180,7 +180,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 			data = dict(location=storage,
 			            path=path,
 			            progress=progress)
-						
+
 			if self._settings.get_boolean(["publish", "printerData"]):
 				data['printer_data'] = self._printer.get_current_data()
 
@@ -236,7 +236,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 				current=self._plugin_version,
 
 				# update method: pip
-				pip="https://github.com/OctoPrint/OctoPrint-MQTT/archive/{target_version}.zip"
+				pip="https://github.com/bwysocki/OctoPrint-MQTT/archive/{target_version}.zip"
 			)
 		)
 
@@ -451,7 +451,7 @@ class MqttPlugin(octoprint.plugin.SettingsPlugin,
 		return self._settings.get_boolean(["publish", "events", "unclassified"])
 
 
-__plugin_name__ = "MQTT"
+__plugin_name__ = "MQTTAWS"
 
 def __plugin_load__():
 	plugin = MqttPlugin()

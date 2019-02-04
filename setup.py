@@ -11,14 +11,14 @@ plugin_package = "octoprint_mqttaws"
 plugin_name = "OctoPrint-MQTTAWS"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.8.0"
+plugin_version = "0.8.1"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
 plugin_description = "An OctoPrint Plugin that adds support for MQTT to OctoPrint."
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
-plugin_author = "Gina Häußge"
+plugin_author = "Gina Häußge Bartosz Wysocki"
 
 # The plugin's author's mail address.
 plugin_author_email = "gina@octoprint.org"
