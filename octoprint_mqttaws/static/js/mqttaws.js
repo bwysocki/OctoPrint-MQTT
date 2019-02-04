@@ -25,6 +25,6 @@ $(function() {
     ADDITIONAL_VIEWMODELS.push([
         MQTTAWSViewModel,
         ["settingsViewModel"],
-        ["#settings_plugin_mqttawsaws"]
+        ["#settings_plugin_mqttaws"]
     ]);
 });
