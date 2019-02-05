@@ -245,30 +245,33 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 	##~~ helpers
 
 	def mqtt_connect(self):
-        broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+        try:
+            broker_tls = self._settings.get(["broker", "tls"], asdict=True)
 
-        host = self._settings.get(["broker", "url"])
-        rootCAPath = broker_tls.get('ca_certs')
-        port = 443
-        clientId = 'TODO'
-        topic = self._get_topic("lw")
+            host = self._settings.get(["broker", "url"])
+            rootCAPath = broker_tls.get('ca_certs')
+            port = 443
+            clientId = 'TODO'
+            topic = self._get_topic("lw")
 
-        myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
-        myAWSIoTMQTTClient.configureEndpoint(host, port)
-        myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+            myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+            myAWSIoTMQTTClient.configureEndpoint(host, port)
+            myAWSIoTMQTTClient.configureCredentials(rootCAPath)
 
-        # AWSIoTMQTTClient connection configuration
-        myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 32, 20)
-        myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
-        myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-        myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
-        myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+            # AWSIoTMQTTClient connection configuration
+            myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 32, 20)
+            myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+            myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+            myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
+            myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
-        # Connect and subscribe to AWS IoT
-        message = {}
-        message['message'] = 'abcada'
-        messageJson = json.dumps(message)
-        myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+            # Connect and subscribe to AWS IoT
+            message = {}
+            message['message'] = 'abcada'
+            messageJson = json.dumps(message)
+            myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+        except:
+            print("An exception occurred")
 
         broker_url = self._settings.get(["broker", "url"])
 		broker_port = self._settings.get_int(["broker", "port"])
