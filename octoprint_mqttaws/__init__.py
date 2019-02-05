@@ -245,7 +245,11 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     ##~~ helpers
 
     def mqtt_connect(self):
-        try:
+        
+		
+		
+		
+		try:
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
 
             host = self._settings.get(["broker", "url"])
