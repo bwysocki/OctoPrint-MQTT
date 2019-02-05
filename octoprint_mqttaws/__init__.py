@@ -176,6 +176,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 else:
                     data = dict(payload)
                 data["_event"] = event
+                self._logger.info("INFO 8b")
                 self.mqtt_publish_with_timestamp(topic.format(event=event), data)
 
     ##~~ ProgressPlugin API
@@ -368,6 +369,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             self._mqtt.loop_stop(force=True)
 
     def mqtt_publish_with_timestamp(self, topic, payload, retained=False, qos=0, allow_queueing=False, timestamp=None):
+        self._logger.info("INFO 8c")
         if not payload:
             payload = dict()
         if not isinstance(payload, dict):
@@ -376,7 +378,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         if timestamp is None:
             timestamp = time.time()
         payload["_timestamp"] = int(timestamp)
-
+        self._logger.info("INFO 8a")
         return self.mqtt_publish(topic, payload, retained=retained, qos=qos, allow_queueing=allow_queueing)
 
     def mqtt_publish(self, topic, payload, retained=False, qos=0, allow_queueing=False):
