@@ -278,13 +278,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
             myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
-            self._mqtt = myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client
-            self._mqtt.on_connect = self._on_mqtt_connect
-            self._mqtt.on_disconnect = self._on_mqtt_disconnect
-            self._mqtt.on_message = self._on_mqtt_message
-
-            #myAWSIoTMQTTClient.connect()
-            myAWSIoTMQTTClient._mqtt_core.connect(600)
+            myAWSIoTMQTTClient.connect()
 
             # Connect and subscribe to AWS IoT
             message = {}
@@ -293,7 +287,12 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
             self._logger.info("INFO 7")
 
+            self._mqtt = myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client
+            self._mqtt.on_connect = self._on_mqtt_connect
+            self._mqtt.on_disconnect = self._on_mqtt_disconnect
+            self._mqtt.on_message = self._on_mqtt_message
 
+            self._mqtt_connected = True
         except:
             self._logger.error("Can not sent sample msg AWS")
 
