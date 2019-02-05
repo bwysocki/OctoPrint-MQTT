@@ -42,14 +42,6 @@
 				</div>
 			</div>
 
-			<div class="control-group">
-				<div class="controls">
-					<label class="checkbox">
-						<input type="checkbox" data-bind="checked: showUserCredentials"> {{ _('The broker requires username and password to connect, show options') }}
-					</label>
-				</div>
-			</div>
-
 			<div data-bind="visible: showUserCredentials" style="display: none">
 				<div class="control-group">
 					<label class="control-label">{{ _('Username') }}</label>
@@ -85,23 +77,20 @@
 				</div>
 
 				<div class="control-group">
-					<label class="control-label">{{ _('Path to client certificate') }}</label>
+					<label class="control-label">{{ _('AWS ACCESS KEY') }}</label>
 					<div class="controls">
-						<input type="text" class="input-large" id="settings_plugin_mqttaws_broker_tls_certfile" data-bind="value: settings.broker.tls.certfile" />
-						<span class="help-block">{{ _('Paths to the PEM encoded client certificate, <strong>must not be password protected</strong>, only necessary if broker requires client certificate authentication.') }}</span>
+						<input type="text" class="input-large" id="settings_plugin_mqttaws_awsaccesskey" data-bind="value: settings.broker.awsaccesskey" />
 					</div>
 				</div>
 
 				<div class="control-group">
-					<label class="control-label">{{ _('Path to client key') }}</label>
+					<label class="control-label">{{ _('AWS SECRET ACCESS KEY') }}</label>
 					<div class="controls">
-						<input type="text" class="input-large" id="settings_plugin_mqttaws_broker_tls_keyfile" data-bind="value: settings.broker.tls.keyfile" />
-						<span class="help-block">{{ _('Paths to the PEM encoded private keys, <strong>must not be password protected</strong>, only necessary if broker requires client certificate authentication.') }}</span>
+						<input type="text" class="input-large" id="settings_plugin_mqttaws_awssecretaccesskey" data-bind="value: settings.broker.secretawsaccesskey" />
 					</div>
 				</div>
 
 				<div class="advanced-options-container">
-					<div><small><a href="#" class="muted" data-bind="toggleContent: { class: 'fa-caret-right fa-caret-down', parent: '.advanced-options-container', container: '.hide' }"><i class="fa fa-caret-right"></i> {{ _('Advanced TLS options') }}</a></small></div>
 					<div class="hide">
 						<div class="control-group">
 							<label class="control-label">{{ _('Ciphers') }}</label>

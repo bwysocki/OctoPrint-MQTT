@@ -6,6 +6,7 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import json
 import time
 from collections import deque
+import os
 
 import octoprint.plugin
 
@@ -245,11 +246,9 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     ##~~ helpers
 
     def mqtt_connect(self):
-        
-		
-		
-		
 		try:
+            os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
+			os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
 
             host = self._settings.get(["broker", "url"])
@@ -275,7 +274,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             messageJson = json.dumps(message)
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
         except:
-            print("An exception occurred")
+            self._logger.error("Can not sent sample msg AWS")
 
         broker_url = self._settings.get(["broker", "url"])
         broker_port = self._settings.get_int(["broker", "port"])
