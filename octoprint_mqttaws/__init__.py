@@ -283,7 +283,8 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             self._mqtt.on_disconnect = self._on_mqtt_disconnect
             self._mqtt.on_message = self._on_mqtt_message
 
-            myAWSIoTMQTTClient.connect()
+            #myAWSIoTMQTTClient.connect()
+            myAWSIoTMQTTClient._mqtt_core.connect(600)
 
             # Connect and subscribe to AWS IoT
             message = {}
