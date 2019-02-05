@@ -9,7 +9,7 @@ $(function() {
         self.showSsl = ko.observable(false);
 
         self.settings = undefined;
-        self.availableProtocols = ko.observableArray(['MQTTv31','MQTTv311']);
+        self.availableProtocols = ko.observableArray(['WSS']);
 
         self.onBeforeBinding = function () {
             self.settings = self.global_settings.settings.plugins.mqttaws;
