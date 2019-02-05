@@ -274,6 +274,8 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
             myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
+            myAWSIoTMQTTClient.connect()
+            
             # Connect and subscribe to AWS IoT
             message = {}
             message['message'] = 'zloooo'

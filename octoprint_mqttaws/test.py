@@ -3,7 +3,7 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import time
 
 host = 'a9tg1a03ro09m-ats.iot.eu-central-1.amazonaws.com'
-rootCAPath = '../../AmazonRootCA1.pem'
+rootCAPath = './AmazonRootCA1.pem'
 port = 443
 clientId = 'TODO'
 topic = 'abcmqtt'
