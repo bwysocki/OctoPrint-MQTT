@@ -246,7 +246,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     ##~~ helpers
 
     def mqtt_connect(self):
-		try:
+        try:
             os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
             os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
