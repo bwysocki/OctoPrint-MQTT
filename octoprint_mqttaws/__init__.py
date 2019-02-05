@@ -250,13 +250,19 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
             os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-
+            
+            self._logger.info("INFO 1" + os.environ.get('AWS_ACCESS_KEY_ID'))
+            self._logger.info("INFO 2" + os.environ.get('AWS_SECRET_ACCESS_KEY'))
             host = self._settings.get(["broker", "url"])
             rootCAPath = broker_tls.get('ca_certs')
             port = 443
             clientId = 'TODO'
             topic = self._get_topic("lw")
 
+            self._logger.info("INFO 3" + host)
+            self._logger.info("INFO 4" + rootCAPath)
+            self._logger.info("INFO 5" + clientId)
+            self._logger.info("INFO 6" + topic)
             myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
             myAWSIoTMQTTClient.configureEndpoint(host, port)
             myAWSIoTMQTTClient.configureCredentials(rootCAPath)
