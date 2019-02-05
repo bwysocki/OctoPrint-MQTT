@@ -382,7 +382,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     def mqtt_publish(self, topic, payload, retained=False, qos=0, allow_queueing=False):
         if not isinstance(payload, basestring):
             payload = json.dumps(payload)
-
+        self._logger.info("INFO 8")
         if not self._mqtt_connected:
             if allow_queueing:
                 self._logger.debug("Not connected, enqueuing message: {topic} - {payload}".format(**locals()))
@@ -390,9 +390,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 return True
             else:
                 return False
-
+        self._logger.info("INFO 9")
         self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
         self._logger.debug("Sent message: {topic} - {payload}".format(**locals()))
+        self._logger.info("INFO 10")
         return True
 
     def mqtt_subscribe(self, topic, callback, args=None, kwargs=None):
