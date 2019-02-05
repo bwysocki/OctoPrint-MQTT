@@ -6,7 +6,7 @@ host = 'a9tg1a03ro09m-ats.iot.eu-central-1.amazonaws.com'
 rootCAPath = '../../AmazonRootCA1.pem'
 port = 443
 clientId = 'TODO'
-topic = 'abc'
+topic = 'abcmqtt'
 
 # Custom MQTT message callback
 def customCallback(client, userdata, message):

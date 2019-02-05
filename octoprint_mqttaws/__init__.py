@@ -276,9 +276,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
             # Connect and subscribe to AWS IoT
             message = {}
-            message['message'] = 'abcada'
+            message['message'] = 'zloooo'
             messageJson = json.dumps(message)
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+            self._logger.info("INFO 7")
         except:
             self._logger.error("Can not sent sample msg AWS")
 
