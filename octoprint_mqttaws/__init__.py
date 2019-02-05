@@ -286,12 +286,15 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             message['message'] = 'zloooo'
             messageJson = json.dumps(message)
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+            #self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
             self._logger.info("INFO 7")
 
             self._mqtt = myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client
             self._mqtt.on_connect = self._on_mqtt_connect
             self._mqtt.on_disconnect = self._on_mqtt_disconnect
             self._mqtt.on_message = self._on_mqtt_message
+
+            myAWSIoTMQTTClient.publish(topic, messageJson, 1)
 
             self._mqtt_connected = True
         except:
