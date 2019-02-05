@@ -167,7 +167,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         self._logger.info("INFO ON EVENT : topic = " + topic)
         self._logger.info("INFO ON EVENT : event = " + event)
-        self._logger.info("INFO ON EVENT : active = " + self._is_event_active(event))
+        self._logger.info(self._is_event_active(event))
 
         if topic:
             if self._is_event_active(event):
