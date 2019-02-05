@@ -250,7 +250,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
             os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-            
+
             self._logger.info("INFO 1" + os.environ.get('AWS_ACCESS_KEY_ID'))
             self._logger.info("INFO 2" + os.environ.get('AWS_SECRET_ACCESS_KEY'))
             host = self._settings.get(["broker", "url"])
@@ -275,71 +275,75 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
             myAWSIoTMQTTClient.connect()
-            
+
             # Connect and subscribe to AWS IoT
             message = {}
             message['message'] = 'zloooo'
             messageJson = json.dumps(message)
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
             self._logger.info("INFO 7")
+
+            self._mqtt = myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client
+            self._mqtt.on_connect = self._on_mqtt_connect
+            self._mqtt.on_disconnect = self._on_mqtt_disconnect
+            self._mqtt.on_message = self._on_mqtt_message
         except:
             self._logger.error("Can not sent sample msg AWS")
 
-        broker_url = self._settings.get(["broker", "url"])
-        broker_port = self._settings.get_int(["broker", "port"])
-        broker_username = self._settings.get(["broker", "username"])
-        broker_password = self._settings.get(["broker", "password"])
-        broker_keepalive = self._settings.get_int(["broker", "keepalive"])
-        broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-        broker_tls_insecure = self._settings.get_boolean(["broker", "tls_insecure"])
-        broker_protocol = self._settings.get(["broker", "protocol"])
+        #broker_url = self._settings.get(["broker", "url"])
+        #broker_port = self._settings.get_int(["broker", "port"])
+        #broker_username = self._settings.get(["broker", "username"])
+        #broker_password = self._settings.get(["broker", "password"])
+        #broker_keepalive = self._settings.get_int(["broker", "keepalive"])
+        #broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+        #broker_tls_insecure = self._settings.get_boolean(["broker", "tls_insecure"])
+        #broker_protocol = self._settings.get(["broker", "protocol"])
 
-        lw_active = self._settings.get_boolean(["publish", "lwActive"])
-        lw_topic = self._get_topic("lw")
+        #lw_active = self._settings.get_boolean(["publish", "lwActive"])
+        #lw_topic = self._get_topic("lw")
 
-        if broker_url is None:
-            self._logger.warn("Broker URL is None, can't connect to broker")
-            return
+        #if broker_url is None:
+        #    self._logger.warn("Broker URL is None, can't connect to broker")
+        #    return
 
-        import paho.mqtt.client as mqtt
+        #import paho.mqtt.client as mqtt
 
-        protocol_map = dict(MQTTv31=mqtt.MQTTv31,
-                            MQTTv311=mqtt.MQTTv311)
-        if broker_protocol in protocol_map:
-            protocol = protocol_map[broker_protocol]
-        else:
-            protocol = mqtt.MQTTv31
+        #protocol_map = dict(MQTTv31=mqtt.MQTTv31,
+        #                    MQTTv311=mqtt.MQTTv311)
+        #if broker_protocol in protocol_map:
+        #    protocol = protocol_map[broker_protocol]
+        #else:
+        #    protocol = mqtt.MQTTv31
 
-        if self._mqtt is None:
-            self._mqtt = mqtt.Client(protocol=protocol)
+        #if self._mqtt is None:
+        #    self._mqtt = mqtt.Client(protocol=protocol)
 
-        if broker_username is not None:
-            self._mqtt.username_pw_set(broker_username, password=broker_password)
+        #if broker_username is not None:
+        #    self._mqtt.username_pw_set(broker_username, password=broker_password)
 
-        tls_active = False
-        if broker_tls:
-            tls_args = dict((key, value) for key, value in broker_tls.items() if value)
-            ca_certs = tls_args.pop("ca_certs", None)
-            if ca_certs: # cacerts must not be None for tls_set to work
-                self._mqtt.tls_set(ca_certs, **tls_args)
-                tls_active = True
+        #tls_active = False
+        #if broker_tls:
+        #    tls_args = dict((key, value) for key, value in broker_tls.items() if value)
+        #    ca_certs = tls_args.pop("ca_certs", None)
+        #    if ca_certs: # cacerts must not be None for tls_set to work
+        #        self._mqtt.tls_set(ca_certs, **tls_args)
+        #        tls_active = True
 
-        if broker_tls_insecure and tls_active:
-            self._mqtt.tls_insecure_set(broker_tls_insecure)
+        #if broker_tls_insecure and tls_active:
+        #    self._mqtt.tls_insecure_set(broker_tls_insecure)
 
-        if lw_active and lw_topic:
-            self._mqtt.will_set(lw_topic, self.LWT_DISCONNECTED, qos=1, retain=True)
+        # TODO THIS
+        #if lw_active and lw_topic:
+        #    self._mqtt.will_set(lw_topic, self.LWT_DISCONNECTED, qos=1, retain=True)
 
-        self._mqtt.on_connect = self._on_mqtt_connect
-        self._mqtt.on_disconnect = self._on_mqtt_disconnect
-        self._mqtt.on_message = self._on_mqtt_message
 
-        self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
-        if self._mqtt.loop_start() == mqtt.MQTT_ERR_INVAL:
-            self._logger.error("Could not start MQTT connection, loop_start returned MQTT_ERR_INVAL")
 
-        if lw_active and lw_topic:
-            self._mqtt.publish(lw_topic, self.LWT_CONNECTED, qos=1, retain=True)
+        #self._mqtt.connect_async(broker_url, broker_port, keepalive=broker_keepalive)
+        #if self._mqtt.loop_start() == mqtt.MQTT_ERR_INVAL:
+        #    self._logger.error("Could not start MQTT connection, loop_start returned MQTT_ERR_INVAL")
+
+        #if lw_active and lw_topic:
+        #    self._mqtt.publish(lw_topic, self.LWT_CONNECTED, qos=1, retain=True)
 
     def mqtt_disconnect(self, force=False, incl_lwt=True, lwt=None):
         if self._mqtt is None:

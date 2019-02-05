@@ -3,7 +3,7 @@ from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import time
 
 host = 'a9tg1a03ro09m-ats.iot.eu-central-1.amazonaws.com'
-rootCAPath = './AmazonRootCA1.pem'
+rootCAPath = '../../AmazonRootCA1.pem'
 port = 443
 clientId = 'TODO'
 topic = 'abcmqtt'
@@ -39,5 +39,4 @@ myAWSIoTMQTTClient.publish(topic, messageJson, 1)
 
 a = {"a":1}
 
-print a.get('a')
-time.sleep(1)
+print myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client
