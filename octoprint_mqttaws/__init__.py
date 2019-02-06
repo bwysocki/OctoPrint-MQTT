@@ -251,36 +251,33 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     ##~~ helpers
 
     def mqtt_connect(self):
-        try:
-            os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
-            os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
-            broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-            host = self._settings.get(["broker", "url"])
-            rootCAPath = broker_tls.get('ca_certs')
-            port = 443
-            clientId = 'TODO'
-            topic = self._get_topic("lw")
+        os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
+        os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
+        broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+        host = self._settings.get(["broker", "url"])
+        rootCAPath = broker_tls.get('ca_certs')
+        port = 443
+        clientId = 'TODO'
+        topic = self._get_topic("lw")
 
-            myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
-            myAWSIoTMQTTClient.configureEndpoint(host, port)
-            myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+        myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+        myAWSIoTMQTTClient.configureEndpoint(host, port)
+        myAWSIoTMQTTClient.configureCredentials(rootCAPath)
 
-            # AWSIoTMQTTClient connection configuration
-            myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 32, 20)
-            myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
-            myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-            myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
-            myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+        # AWSIoTMQTTClient connection configuration
+        myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 32, 20)
+        myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+        myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+        myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
+        myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
-            myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
-            myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
-            myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+        myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
+        myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
+        myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
 
-            myAWSIoTMQTTClient.connect()
+        myAWSIoTMQTTClient.connect()
 
-            self._mqtt = myAWSIoTMQTTClient;
-        except:
-            self._logger.error("Can not sent sample msg AWS")
+        self._mqtt = myAWSIoTMQTTClient;
 
         #broker_url = self._settings.get(["broker", "url"])
         #broker_port = self._settings.get_int(["broker", "port"])
@@ -401,7 +398,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     ##~~ mqtt client callbacks
 
-    def _on_mqtt_connect(self, client, userdata, flags, rc):
+    def _on_mqtt_connect(self):
         if self._mqtt_publish_queue:
             try:
                 while True:
@@ -418,7 +415,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         self._mqtt_connected = True
 
-    def _on_mqtt_disconnect(self, client, userdata, rc):
+    def _on_mqtt_disconnect(self):
         self._mqtt_connected = False
 
     def _on_mqtt_message(self, client, userdata, msg):
