@@ -165,10 +165,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         topic = self._get_topic("event")
 
-        self._logger.info("INFO ON EVENT : topic = " + topic)
-        self._logger.info("INFO ON EVENT : event = " + event)
-        self._logger.info(self._is_event_active(event))
-
         if topic:
             if self._is_event_active(event):
                 if payload is None:
@@ -176,7 +172,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 else:
                     data = dict(payload)
                 data["_event"] = event
-                self._logger.info("INFO 8b")
                 self.mqtt_publish_with_timestamp(topic.format(event=event), data)
 
     ##~~ ProgressPlugin API
@@ -419,14 +414,23 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._mqtt_connected = False
 
     def _on_mqtt_message(self, client, userdata, msg):
+        self._logger.info("ON MESSAGE LOG")
         if not client == self._mqtt:
             return
-
+        self._logger.info(self._mqtt_subscriptions)
+        self._logger.info("ON MESSAGE LOG 2")
         from paho.mqtt.client import topic_matches_sub
         for subscription in self._mqtt_subscriptions:
             topic, callback, args, kwargs = subscription
+            self._logger.info(topic)
+            self._logger.info(args)
+            self._logger.info(kwargs)
+            self._logger.info(callback)
+            self._logger.info("ON MESSAGE LOG 3")
             if topic_matches_sub(topic, msg.topic):
+                self._logger.info("ON MESSAGE LOG 4")
                 args = [msg.topic, msg.payload] + args
+                self._logger.info(args)
                 kwargs.update(dict(retained=msg.retain, qos=msg.qos))
                 try:
                     callback(*args, **kwargs)
