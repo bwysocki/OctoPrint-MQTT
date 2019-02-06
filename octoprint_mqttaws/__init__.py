@@ -255,19 +255,12 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
             os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
             broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-
-            self._logger.info("INFO 1" + os.environ.get('AWS_ACCESS_KEY_ID'))
-            self._logger.info("INFO 2" + os.environ.get('AWS_SECRET_ACCESS_KEY'))
             host = self._settings.get(["broker", "url"])
             rootCAPath = broker_tls.get('ca_certs')
             port = 443
             clientId = 'TODO'
             topic = self._get_topic("lw")
 
-            self._logger.info("INFO 3" + host)
-            self._logger.info("INFO 4" + rootCAPath)
-            self._logger.info("INFO 5" + clientId)
-            self._logger.info("INFO 6" + topic)
             myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
             myAWSIoTMQTTClient.configureEndpoint(host, port)
             myAWSIoTMQTTClient.configureCredentials(rootCAPath)
@@ -279,25 +272,13 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.configureConnectDisconnectTimeout(10)  # 10 sec
             myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
+            myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
+            myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
+            myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+
             myAWSIoTMQTTClient.connect()
 
-            # Connect and subscribe to AWS IoT
-            message = {}
-            message['message'] = 'zloooo'
-            messageJson = json.dumps(message)
-            myAWSIoTMQTTClient.publish(topic, messageJson, 1)
-            #self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
-            self._logger.info("INFO 7")
-
             self._mqtt = myAWSIoTMQTTClient;
-            myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_connect = self._on_mqtt_connect
-            myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_disconnect = self._on_mqtt_disconnect
-            myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_message = self._on_mqtt_message
-
-            myAWSIoTMQTTClient.publish(topic, messageJson, 1)
-            myAWSIoTMQTTClient.publish('abc/temperature/a', messageJson, 1)
-
-            self._mqtt_connected = True
         except:
             self._logger.error("Can not sent sample msg AWS")
 
@@ -366,11 +347,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             if lwt:
                 self._mqtt.publish(lwt, self.LWT_DISCONNECTED, qos=1, retain=True)
 
-        self._mqtt.loop_stop()
-
-        if force:
-            time.sleep(1)
-            self._mqtt.loop_stop(force=True)
+        self._mqtt.disconnect()
 
     def mqtt_publish_with_timestamp(self, topic, payload, retained=False, qos=0, allow_queueing=False, timestamp=None):
         if not payload:
