@@ -295,6 +295,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             self._mqtt.on_message = self._on_mqtt_message
 
             myAWSIoTMQTTClient.publish(topic, messageJson, 1)
+            myAWSIoTMQTTClient.publish('abc/temperatura/a', messageJson, 1)
 
             self._mqtt_connected = True
         except:
