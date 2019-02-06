@@ -402,29 +402,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     ##~~ mqtt client callbacks
 
     def _on_mqtt_connect(self, client, userdata, flags, rc):
-        if not client == self._mqtt:
-            return
-
-        if not rc == 0:
-            reasons = [
-                None,
-                "Connection to mqtt broker refused, wrong protocol version",
-                "Connection to mqtt broker refused, incorrect client identifier",
-                "Connection to mqtt broker refused, server unavailable",
-                "Connection to mqtt broker refused, bad username or password",
-                "Connection to mqtt broker refused, not authorised"
-            ]
-
-            if rc < len(reasons):
-                reason = reasons[rc]
-            else:
-                reason = None
-
-            self._logger.error(reason if reason else "Connection to mqtt broker refused, unknown error")
-            return
-
-        self._logger.info("Connected to mqtt broker")
-
         if self._mqtt_publish_queue:
             try:
                 while True:
@@ -442,14 +419,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._mqtt_connected = True
 
     def _on_mqtt_disconnect(self, client, userdata, rc):
-        if not client == self._mqtt:
-            return
-
-        if not rc == 0:
-            self._logger.error("Disconnected from mqtt broker for unknown reasons (network error?), rc = {}".format(rc))
-        else:
-            self._logger.info("Disconnected from mqtt broker")
-
         self._mqtt_connected = False
 
     def _on_mqtt_message(self, client, userdata, msg):
