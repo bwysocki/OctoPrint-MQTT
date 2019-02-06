@@ -289,7 +289,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             #self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
             self._logger.info("INFO 7")
 
-            self._mqtt = myAWSIoTMQTTClient._mqtt_core;
+            self._mqtt = myAWSIoTMQTTClient;
             myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_connect = self._on_mqtt_connect
             myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_disconnect = self._on_mqtt_disconnect
             myAWSIoTMQTTClient._mqtt_core._internal_async_client._paho_client.on_message = self._on_mqtt_message
@@ -393,7 +393,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 return True
             else:
                 return False
-        self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
+        self._mqtt.publish(topic, payload=payload, QoS=qos)
         self._logger.info("Sent message: {topic} - {payload}".format(**locals()))
         return True
 
