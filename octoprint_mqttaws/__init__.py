@@ -247,8 +247,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     def callback(self, client, userdata, message):
         try:
-            parsed_message = json.loads(message)
-            self._logger.info('yeaaaaaaa {message}'.format(message=parsed_message))
+            self._logger.info('yeaaaaaaa {message}'.format(message=message))
         except ValueError:
             self._logger.error(
                 'Could not parse the given message as JSON: {message}'.format(
@@ -260,8 +259,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._logger.info("66666666666666666666")
         try:
             self._logger.info("77777777777777777")
-            parsed_message = json.loads(message)
-            self._logger.info('yeaaaaaaa {message}'.format(message=parsed_message))
+            self._logger.info('yeaaaaaaa {message}'.format(message=message))
             self._logger.info("88888888888888888")
         except ValueError:
             self._logger.info("99999999999999999")
