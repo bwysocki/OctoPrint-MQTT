@@ -286,7 +286,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         self._mqtt = myAWSIoTMQTTClient;
 
-        self.mqtt_subscribe("abc/sss", callback)
+        self.mqtt_subscribe("abc/sss", self.callback)
 
         #broker_url = self._settings.get(["broker", "url"])
         #broker_port = self._settings.get_int(["broker", "port"])
