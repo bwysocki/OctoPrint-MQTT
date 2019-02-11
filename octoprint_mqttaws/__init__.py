@@ -245,7 +245,18 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     ##~~ helpers
 
-    def callback(self, topic, message):
+    def callback(self, client, userdata, message):
+        try:
+            parsed_message = json.loads(message)
+            self._logger.info('yeaaaaaaa {message}'.format(message=parsed_message))
+        except ValueError:
+            self._logger.error(
+                'Could not parse the given message as JSON: {message}'.format(
+                    message=message)
+            )
+            return
+
+    def logCallback(self, client, userdata, message):
         try:
             parsed_message = json.loads(message)
             self._logger.info('yeaaaaaaa {message}'.format(message=parsed_message))
@@ -391,7 +402,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         if not self._mqtt_connected:
             self._mqtt_subscribe_queue.append(topic)
         else:
-            self._mqtt.subscribe(topic)
+            self._mqtt.subscribe(topic, 1, self.logCallback)
 
     def mqtt_unsubscribe(self, callback, topic=None):
         subbed_topics = [subbed_topic for subbed_topic, subbed_callback, _, _ in self._mqtt_subscriptions if callback == subbed_callback and (topic is None or topic == subbed_topic)]
@@ -419,7 +430,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
         if subbed_topics:
-            self._mqtt.subscribe(subbed_topics)
+            self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
             self._logger.debug("Subscribed to topics")
 
         self._mqtt_connected = True
