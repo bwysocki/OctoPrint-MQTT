@@ -245,6 +245,18 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     ##~~ helpers
 
+    def callback(self, topic, message):
+        try:
+            parsed_message = json.loads(message)
+            self._logger.info('yeaaaaaaa {message}'.format(message=parsed_message))
+        except ValueError:
+            self._logger.error(
+                'Could not parse the given message as JSON: {message}'.format(
+                    message=message)
+            )
+            return
+
+
     def mqtt_connect(self):
         os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
         os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
@@ -273,6 +285,8 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         myAWSIoTMQTTClient.connect()
 
         self._mqtt = myAWSIoTMQTTClient;
+
+        self.mqtt_subscribe("abc/sss", callback):
 
         #broker_url = self._settings.get(["broker", "url"])
         #broker_port = self._settings.get_int(["broker", "port"])
@@ -413,10 +427,9 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     def _on_mqtt_disconnect(self):
         self._mqtt_connected = False
 
-    def _on_mqtt_message(self, client, userdata, msg):
+    def _on_mqtt_message(self, msg):
         self._logger.info("ON MESSAGE LOG")
-        if not client == self._mqtt:
-            return
+        self._logger.info(msg)
         self._logger.info(self._mqtt_subscriptions)
         self._logger.info("ON MESSAGE LOG 2")
         from paho.mqtt.client import topic_matches_sub
