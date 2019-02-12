@@ -376,7 +376,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             if topic_matches_sub(topic, msg.topic):
                 kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
-                    callback(**kwargs)
+                    callback(*args, **kwargs)
                 except:
                     self._logger.exception("Error while calling mqtt callback")
 
