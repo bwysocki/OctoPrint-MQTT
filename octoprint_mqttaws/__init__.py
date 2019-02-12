@@ -402,10 +402,10 @@ def __plugin_load__():
 
     global __plugin_helpers__
     __plugin_helpers__ = dict(
-        mqtt_publish=plugin.mqtt_publish,
-        mqtt_publish_with_timestamp=plugin.mqtt_publish_with_timestamp,
-        mqtt_subscribe=plugin.mqtt_subscribe,
-        mqtt_unsubscribe=plugin.mqtt_unsubscribe
+        mqttaws_publish=plugin.mqtt_publish,
+        mqttaws_publish_with_timestamp=plugin.mqtt_publish_with_timestamp,
+        mqttaws_subscribe=plugin.mqtt_subscribe,
+        mqttaws_unsubscribe=plugin.mqtt_unsubscribe
     )
 
     global __plugin_implementation__
