@@ -16,14 +16,6 @@
 			</div>
 
 			<div class="control-group">
-				<label class="control-label">{{ _('Port') }}</label>
-				<div class="controls">
-					<input type="number" class="input-mini text-right" id="settings_plugin_mqttaws_broker_port" data-bind="value: settings.broker.port" />
-					<span class="help-block">{{ _('The broker\'s port, defaults to 1883.') }}</span>
-				</div>
-			</div>
-
-			<div class="control-group">
 				<label class="control-label">{{ _('Protocol version') }}</label>
 				<div class="controls">
 					<select class="input-medium" id="settings_plugin_mqttaws_broker_protocol" data-bind="options: $root.availableProtocols, value: settings.broker.protocol"></select>
@@ -60,14 +52,7 @@
 				</div>
 			</div>
 
-			<div class="control-group">
-				<div class="controls">
-					<label class="checkbox">
-						<input type="checkbox" data-bind="checked: showSsl"> {{ _('The broker requires TLS to connect, show SSL/TLS options') }}
-					</label>
-				</div>
-			</div>
-			<div data-bind="visible: showSsl" style="display: none">
+			<div>
 				<div class="control-group">
 					<label class="control-label">{{ _('Path to server certificate chain') }}</label>
 					<div class="controls">
