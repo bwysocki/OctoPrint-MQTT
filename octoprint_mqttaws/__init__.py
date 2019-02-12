@@ -256,7 +256,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             return
 
     def logCallback(self, client, userdata, message):
-        self._logger.info('Incomming message {message}'.format(message=message))
+        self._logger.info('Incomming message {message} from topic {topic}'.format(message=message.payload, topic=message.topic))
 
 
     def mqtt_connect(self):
@@ -387,15 +387,12 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             args = []
         if kwargs is None:
             kwargs = dict()
-        self._logger.info("1111111111111111111")
         self._mqtt_subscriptions.append((topic, callback, args, kwargs))
 
         if not self._mqtt_connected:
-            self._logger.info("22222222222222222222")
             self._mqtt_subscribe_queue.append(topic)
         else:
             self._mqtt.subscribe(topic, 1, self.logCallback)
-            self._logger.info("33333333333333333333333")
 
     def mqtt_unsubscribe(self, callback, topic=None):
         subbed_topics = [subbed_topic for subbed_topic, subbed_callback, _, _ in self._mqtt_subscriptions if callback == subbed_callback and (topic is None or topic == subbed_topic)]
@@ -420,11 +417,9 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             except IndexError:
                 # that's ok, queue is just empty
                 pass
-        self._logger.info("4444444444444444444")
         subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
         if subbed_topics:
             self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
-            self._logger.debug("Subscribed to topics")
 
         self._mqtt_connected = True
 
@@ -432,22 +427,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._mqtt_connected = False
 
     def _on_mqtt_message(self, msg):
-        self._logger.info("ON MESSAGE LOG")
-        self._logger.info(msg)
-        self._logger.info(self._mqtt_subscriptions)
-        self._logger.info("ON MESSAGE LOG 2")
         from paho.mqtt.client import topic_matches_sub
         for subscription in self._mqtt_subscriptions:
             topic, callback, args, kwargs = subscription
-            self._logger.info(topic)
-            self._logger.info(args)
-            self._logger.info(kwargs)
-            self._logger.info(callback)
-            self._logger.info("ON MESSAGE LOG 3")
             if topic_matches_sub(topic, msg.topic):
-                self._logger.info("ON MESSAGE LOG 4")
-                args = [msg.topic, msg.payload] + args
-                self._logger.info(args)
                 kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
                     callback(**kwargs)
