@@ -256,18 +256,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             return
 
     def logCallback(self, client, userdata, message):
-        self._logger.info("66666666666666666666")
-        try:
-            self._logger.info("77777777777777777")
-            self._logger.info('yeaaaaaaa {message}'.format(message=message))
-            self._logger.info("88888888888888888")
-        except ValueError:
-            self._logger.info("99999999999999999")
-            self._logger.error(
-                'Could not parse the given message as JSON: {message}'.format(
-                    message=message)
-            )
-            return
+        self._logger.info('Incomming message {message}'.format(message=message))
 
 
     def mqtt_connect(self):
@@ -459,9 +448,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 self._logger.info("ON MESSAGE LOG 4")
                 args = [msg.topic, msg.payload] + args
                 self._logger.info(args)
-                kwargs.update(dict(retained=msg.retain, qos=msg.qos))
+                kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
-                    callback(*args, **kwargs)
+                    //lient, userdata, message
+                    callback(**kwargs)
                 except:
                     self._logger.exception("Error while calling mqtt callback")
 
