@@ -374,6 +374,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         for subscription in self._mqtt_subscriptions:
             topic, callback, args, kwargs = subscription
             if topic_matches_sub(topic, msg.topic):
+                args = [msg.topic, msg.payload] + args
                 kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
                     callback(*args, **kwargs)
