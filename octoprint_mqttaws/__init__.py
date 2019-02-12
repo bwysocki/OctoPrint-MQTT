@@ -270,6 +270,18 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         topic = self._get_topic("lw")
 
         myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+
+        if "https_proxy" in os.environ:
+            import httplib2
+            import socket
+            import socks
+            proxy = os.environ["https_proxy"].strip().split
+            proxyHost = str(proxy[0]).replace("http://", "").replace("https://", "")
+            proxyPort = int(proxy[1])
+            self._logger.info('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
+            socks.setdefaultproxy(socks.PROXY_TYPE_HTTP, proxyHost, proxyPort)
+            socket.socket = socks.socksocket
+
         myAWSIoTMQTTClient.configureEndpoint(host, port)
         myAWSIoTMQTTClient.configureCredentials(rootCAPath)
 
