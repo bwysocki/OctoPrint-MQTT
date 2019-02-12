@@ -4,17 +4,19 @@ import time
 import os
 
 env = os.environ.copy()
-print("Checking proxy: {proxy}".format(proxy=env.get("https_proxy", False)))
-if env.get("https_proxy", False) != False:
+print env["HTTPS_PROXY"]
+print("Checking proxy: {proxy}".format(proxy=env.get("HTTPS_PROXY", False)))
+if env.get("HTTPS_PROXY", False) != False:
     import httplib2
     import socket
     import socks
-    proxy = os.environ["https_proxy"].strip().split
-    proxyHost = str(proxy[0]).replace("http://", "").replace("https://", "")
+    proxyEnv = os.environ["HTTPS_PROXY"].replace("http://", "").replace("https://", "")
+    proxy = proxyEnv.strip().split(":")
+    proxyHost = str(proxy[0])
     proxyPort = int(proxy[1])
-    print('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
     socks.setdefaultproxy(socks.PROXY_TYPE_HTTP, proxyHost, proxyPort)
     socket.socket = socks.socksocket
+    print('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
 
 
 host = 'a9tg1a03ro09m-ats.iot.eu-central-1.amazonaws.com'
