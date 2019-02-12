@@ -1,6 +1,21 @@
 import json
 from AWSIoTPythonSDK.MQTTLib import AWSIoTMQTTClient
 import time
+import os
+
+env = os.environ.copy()
+print("Checking proxy: {proxy}".format(proxy=env.get("https_proxy", False)))
+if env.get("https_proxy", False) != False:
+    import httplib2
+    import socket
+    import socks
+    proxy = os.environ["https_proxy"].strip().split
+    proxyHost = str(proxy[0]).replace("http://", "").replace("https://", "")
+    proxyPort = int(proxy[1])
+    print('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
+    socks.setdefaultproxy(socks.PROXY_TYPE_HTTP, proxyHost, proxyPort)
+    socket.socket = socks.socksocket
+
 
 host = 'a9tg1a03ro09m-ats.iot.eu-central-1.amazonaws.com'
 rootCAPath = '../../AmazonRootCA1.pem'
