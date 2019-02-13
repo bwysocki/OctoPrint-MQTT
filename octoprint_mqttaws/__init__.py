@@ -298,6 +298,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             self._proxySocket = socket.socket
             self._proxySocksSocket = socks.socksocket
             socket.socket = socks.socksocket
+            os.environ['NO_PROXY'] = 'localhost';
 
         myAWSIoTMQTTClient.configureEndpoint(host, port)
         myAWSIoTMQTTClient.configureCredentials(rootCAPath)
