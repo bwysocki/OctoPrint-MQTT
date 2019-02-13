@@ -71,7 +71,7 @@ MQTT topics, see below for details and a usage example.
 
 Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager) using this URL:
 
-    https://github.com/bwysocki/OctoPrint-MQTT/archive/master.zip
+    https://bitbucket.org/9t-labs/octoprint-mqttaws/get/master.zip
 
 ## Configuration
 
