@@ -275,10 +275,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
 
-        proxy = self._settings.get(["broker", "proxy"])
+        proxy = os.environ["HTTPS_PROXY"]
 
-        #env = os.environ.copy()
-        #self._logger.info(env)
+        env = os.environ.copy()
+        self._logger.info(env)
         self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
         if proxy:
             proxyEnv = proxy.replace("http://", "").replace("https://", "")
