@@ -7,6 +7,8 @@ import json
 import time
 from collections import deque
 import os
+import socket
+import socks
 
 import octoprint.plugin
 
@@ -57,6 +59,8 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._mqtt_subscribe_queue = deque()
 
         self.lastTemp = {}
+        self._proxySocket = None
+        self._proxySocksSocket = None
 
     def initialize(self):
         self._printer.register_callback(self)
@@ -277,15 +281,14 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         #self._logger.info(env)
         self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
         if proxy:
-            import httplib2
-            import socket
-            import socks
             proxyEnv = proxy.replace("http://", "").replace("https://", "")
             proxy = proxyEnv.strip().split(":")
             proxyHost = str(proxy[0])
             proxyPort = int(proxy[1])
             self._logger.info('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
             socks.setdefaultproxy(socks.PROXY_TYPE_HTTP, proxyHost, proxyPort)
+            self._proxySocket = socket.socket
+            self._proxySocksSocket = socks.socksocket
             socket.socket = socks.socksocket
 
         myAWSIoTMQTTClient.configureEndpoint(host, port)
@@ -395,7 +398,11 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 args = [msg.topic, msg.payload] + args
                 kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
+                    if (self._proxySocket):
+                        socket.socket = self._proxySocket
                     callback(*args, **kwargs)
+                    if (self._proxySocksSocket):
+                        socket.socket = self._proxySocksSocket
                 except:
                     self._logger.exception("Error while calling mqtt callback")
 
