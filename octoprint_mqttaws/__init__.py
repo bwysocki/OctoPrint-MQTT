@@ -406,11 +406,11 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 args = [msg.topic, msg.payload] + args
                 kwargs.update(dict(client=None, userdata=None, message = msg))
                 try:
-                    if (self._proxySocket):
-                        socket.socket = self._proxySocket
+                    #if (self._proxySocket):
+                    #    socket.socket = self._proxySocket
                     callback(*args, **kwargs)
-                    if (self._proxySocksSocket):
-                        socket.socket = self._proxySocksSocket
+                    #if (self._proxySocksSocket):
+                    #    socket.socket = self._proxySocksSocket
                 except:
                     self._logger.exception("Error while calling mqtt callback")
 
