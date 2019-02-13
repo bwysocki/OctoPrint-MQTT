@@ -103,7 +103,9 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 keepalive=60,
                 tls=dict(),
                 tls_insecure=False,
-                protocol="MQTTv31"
+                protocol="MQTTv31",
+                awsaccesskey='',
+                secretawsaccesskey=''
             ),
             publish=dict(
                 baseTopic="octoprint/",
@@ -266,6 +268,10 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     def mqtt_connect(self):
         os.environ["AWS_ACCESS_KEY_ID"] = self._settings.get(["broker", "awsaccesskey"])
         os.environ["AWS_SECRET_ACCESS_KEY"] = self._settings.get(["broker", "secretawsaccesskey"])
+
+        if (not os.environ["AWS_SECRET_ACCESS_KEY"] or not os.environ["AWS_ACCESS_KEY_ID"]):
+            return
+
         broker_tls = self._settings.get(["broker", "tls"], asdict=True)
         host = self._settings.get(["broker", "url"])
         rootCAPath = broker_tls.get('ca_certs')
