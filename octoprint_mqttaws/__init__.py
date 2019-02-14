@@ -9,6 +9,8 @@ from collections import deque
 import os
 import socket
 import socks
+import string
+import random
 
 import octoprint.plugin
 
@@ -279,7 +281,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         host = self._settings.get(["broker", "url"])
         rootCAPath = broker_tls.get('ca_certs')
         port = 443
-        clientId = 'TODO'
+        clientId = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(6))
         topic = self._get_topic("lw")
 
         myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
