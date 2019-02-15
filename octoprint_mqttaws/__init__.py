@@ -328,7 +328,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             if lwt is None:
                 lwt = self._get_topic("lw")
             if lwt:
-                self._mqtt.publish(lwt, self.LWT_DISCONNECTED, qos=1, retain=True)
+                self._mqtt.publish(topic=lwt, payload=self.LWT_DISCONNECTED, QoS=1)
 
         self._mqtt.disconnect()
 
@@ -389,7 +389,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             try:
                 while True:
                     topic, payload, retained, qos = self._mqtt_publish_queue.popleft()
-                    self._mqtt.publish(topic, payload=payload, retain=retained, qos=qos)
+                    self._mqtt.publish(topic, payload=payload, QoS=qos)
             except IndexError:
                 # that's ok, queue is just empty
                 pass
