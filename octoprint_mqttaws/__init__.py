@@ -307,7 +307,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
         # AWSIoTMQTTClient connection configuration
         myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 32, 20)
-        myAWSIoTMQTTClient.configureOfflinePublishQueueing(1)  # Infinite offline Publish queueing
+        myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
         myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
         myAWSIoTMQTTClient.configureConnectDisconnectTimeout(30)  # 10 sec
         myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
@@ -399,7 +399,8 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._mqtt_connected = True
 
     def _on_mqtt_disconnect(self):
-        self._mqtt_connected = False
+        self._logger.info("Printer lost connection")
+        #self._mqtt_connected = False
 
     def _on_mqtt_message(self, msg):
         from paho.mqtt.client import topic_matches_sub
