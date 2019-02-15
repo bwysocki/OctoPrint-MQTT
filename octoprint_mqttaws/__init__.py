@@ -353,7 +353,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 return True
             else:
                 return False
-        self._mqtt.c(topic, payload=payload, QoS=qos)
+        self._mqtt.publish(topic, payload=payload, QoS=qos)
         self._logger.info("Sent message: {topic} - {payload}".format(**locals()))
         return True
 
