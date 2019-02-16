@@ -299,7 +299,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
         myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
         myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-        myAWSIoTMQTTClient.configureConnectDisconnectTimeout(30)  # 10 sec
+        myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
         myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
         myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
