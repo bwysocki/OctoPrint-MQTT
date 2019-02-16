@@ -253,16 +253,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     ##~~ helpers
 
-    def callback(self, client, userdata, message):
-        try:
-            self._logger.info('yeaaaaaaa {message}'.format(message=message))
-        except ValueError:
-            self._logger.error(
-                'Could not parse the given message as JSON: {message}'.format(
-                    message=message)
-            )
-            return
-
     def logCallback(self, client, userdata, message):
         self._logger.info('Incomming message {message} from topic {topic}'.format(message=message.payload, topic=message.topic))
 
@@ -385,23 +375,23 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
     def _on_mqtt_connect(self):
         self._logger.info("Printer gets connection")
-        if self._mqtt_publish_queue:
-            try:
-                while True:
-                    topic, payload, retained, qos = self._mqtt_publish_queue.popleft()
-                    self._mqtt.publish(topic, payload=payload, QoS=qos)
-            except IndexError:
-                # that's ok, queue is just empty
-                pass
-        subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
-        if subbed_topics:
-            self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
-
+        #if self._mqtt_publish_queue:
+        #    try:
+        #        while True:
+        #            topic, payload, retained, qos = self._mqtt_publish_queue.popleft()
+        #            self._mqtt.publish(topic, payload=payload, QoS=qos)
+        #    except IndexError:
+        #        # that's ok, queue is just empty
+        #        pass
+        #subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
+        #if subbed_topics:
+        #    self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
+        self.mqtt_connect()
         self._mqtt_connected = True
 
     def _on_mqtt_disconnect(self):
         self._logger.info("Printer lost connection")
-        #self._mqtt_connected = False
+        self._mqtt_connected = False
 
     def _on_mqtt_message(self, msg):
         from paho.mqtt.client import topic_matches_sub
