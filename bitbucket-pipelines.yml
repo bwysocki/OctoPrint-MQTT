@@ -1,0 +1,24 @@
+image: python:2.7.13
+
+pipelines:
+  default:
+    # - step:
+    #     name: Testing
+    #     caches:
+    #       - pip
+    #     script:
+    #       - pip install git+https://github.com/foosel/OctoPrint.git
+    #       - pip install .[dev]
+    #       - pytest --cov=octoprint_mqtt_controls tests/
+    - step:
+        name: Push Package
+        trigger: manual
+        caches:
+          - pip
+        script:
+          - pip install awscli
+          - apt update
+          - apt install -y zip
+          - export PACKAGE=octoprint-wifi-conf.zip
+          - zip -r $PACKAGE . -x .git/ tests/ bitbucket-pipelines.yml $PACKAGE
+          - aws s3 cp $PACKAGE $PACKAGE_S3_URI
