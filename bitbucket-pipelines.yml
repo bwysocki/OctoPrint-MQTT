@@ -7,9 +7,10 @@ pipelines:
         caches:
           - pip
         script:
-          #- pip install git+https://github.com/foosel/OctoPrint.git
-          #- pip install .[dev]
+          - pip install git+https://github.com/foosel/OctoPrint.git
+          - pip install .[dev]
           # - pytest --cov=octoprint_mqtt_controls tests/
+          - flake8
           - echo "Add tests!"
     - step:
         name: Push Package
