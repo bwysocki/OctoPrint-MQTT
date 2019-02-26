@@ -291,7 +291,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 self._proxySocket = socket.socket
                 self._proxySocksSocket = socks.socksocket
                 socket.socket = socks.socksocket
-                os.environ['NO_PROXY'] = 'localhost';
+                os.environ['NO_PROXY'] = 'localhost,127.0.0.0,127.0.1.1,127.0.0.1,local.home';
 
             myAWSIoTMQTTClient.configureEndpoint(host, port)
             myAWSIoTMQTTClient.configureCredentials(rootCAPath)
@@ -307,9 +307,12 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
             myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
 
-            myAWSIoTMQTTClient.connect()
+            try:
+              myAWSIoTMQTTClient.connect()
+              self._mqtt = myAWSIoTMQTTClient;
+            except:
+              self.mqtt_connect()
 
-            self._mqtt = myAWSIoTMQTTClient;
 
     def mqtt_disconnect(self, force=False, incl_lwt=True, lwt=None):
         if self._mqtt is None:
