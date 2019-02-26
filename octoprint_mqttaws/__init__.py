@@ -337,7 +337,7 @@ class MqttAWSPlugin(
                 self._proxySocket = socket.socket
                 self._proxySocksSocket = socks.socksocket
                 socket.socket = socks.socksocket
-                os.environ['NO_PROXY'] = 'localhost,127.0.0.0,127.0.1.1,127.0.0.1,local.home'
+                os.environ['NO_PROXY'] = 'localhost'
 
             myAWSIoTMQTTClient.configureEndpoint(host, port)
             myAWSIoTMQTTClient.configureCredentials(rootCAPath)
