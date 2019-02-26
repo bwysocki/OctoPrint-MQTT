@@ -61,6 +61,7 @@ plugin_requires = [
     "AWSIoTPythonSDK",
     "PySocks",
     "httplib2",
+    "requests"
 ]
 
 extras_require = {
