@@ -9,44 +9,58 @@ from collections import deque
 import os
 import socket
 import socks
-import string
-import random
 
 import octoprint.plugin
 
 from octoprint.events import Events
 from octoprint.util import dict_minimal_mergediff
 
-class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
-                 octoprint.plugin.StartupPlugin,
-                 octoprint.plugin.ShutdownPlugin,
-                 octoprint.plugin.EventHandlerPlugin,
-                 octoprint.plugin.ProgressPlugin,
-                 octoprint.plugin.TemplatePlugin,
-                 octoprint.plugin.AssetPlugin,
-                 octoprint.printer.PrinterCallback):
 
-    EVENT_CLASS_TO_EVENT_LIST = dict(server   = (Events.STARTUP, Events.SHUTDOWN, Events.CLIENT_OPENED,
-                                                 Events.CLIENT_CLOSED, Events.CONNECTIVITY_CHANGED),
-                                     comm     = (Events.CONNECTING, Events.CONNECTED, Events.DISCONNECTING,
-                                                 Events.DISCONNECTED, Events.ERROR, Events.PRINTER_STATE_CHANGED),
-                                     files    = (Events.UPLOAD, Events.FILE_ADDED, Events.FILE_REMOVED,
-                                                 Events.FOLDER_ADDED, Events.FOLDER_REMOVED, Events.UPDATED_FILES,
-                                                 Events.METADATA_ANALYSIS_STARTED, Events.METADATA_ANALYSIS_FINISHED,
-                                                 Events.FILE_SELECTED, Events.FILE_DESELECTED, Events.TRANSFER_STARTED,
-                                                 Events.TRANSFER_FAILED, Events.TRANSFER_DONE),
-                                     printjob = (Events.PRINT_STARTED, Events.PRINT_FAILED, Events.PRINT_DONE,
-                                                 Events.PRINT_CANCELLED, Events.PRINT_PAUSED, Events.PRINT_RESUMED),
-                                     gcode    = (Events.POWER_ON, Events.POWER_OFF, Events.HOME, Events.Z_CHANGE,
-                                                 Events.DWELL, Events.WAITING, Events.COOLING, Events.ALERT,
-                                                 Events.CONVEYOR, Events.EJECT, Events.E_STOP, Events.POSITION_UPDATE,
-                                                 Events.TOOL_CHANGE),
-                                     timelapse= (Events.CAPTURE_START, Events.CAPTURE_FAILED, Events.CAPTURE_DONE,
-                                                 Events.MOVIE_RENDERING, Events.MOVIE_FAILED, Events.MOVIE_FAILED),
-                                     slicing  = (Events.SLICING_STARTED, Events.SLICING_DONE, Events.SLICING_CANCELLED,
-                                                 Events.SLICING_FAILED, Events.SLICING_PROFILE_ADDED,
-                                                 Events.SLICING_PROFILE_DELETED, Events.SLICING_PROFILE_MODIFIED),
-                                     settings = (Events.SETTINGS_UPDATED,))
+class MqttAWSPlugin(
+        octoprint.plugin.SettingsPlugin, octoprint.plugin.StartupPlugin,
+        octoprint.plugin.ShutdownPlugin, octoprint.plugin.EventHandlerPlugin,
+        octoprint.plugin.ProgressPlugin, octoprint.plugin.TemplatePlugin,
+        octoprint.plugin.AssetPlugin, octoprint.printer.PrinterCallback):
+
+    EVENT_CLASS_TO_EVENT_LIST = dict(
+        server=(
+            Events.STARTUP, Events.SHUTDOWN, Events.CLIENT_OPENED,
+            Events.CLIENT_CLOSED, Events.CONNECTIVITY_CHANGED
+        ),
+        comm=(
+            Events.CONNECTING, Events.CONNECTED, Events.DISCONNECTING,
+            Events.DISCONNECTED, Events.ERROR, Events.PRINTER_STATE_CHANGED
+        ),
+        files=(
+            Events.UPLOAD, Events.FILE_ADDED, Events.FILE_REMOVED,
+            Events.FOLDER_ADDED, Events.FOLDER_REMOVED, Events.UPDATED_FILES,
+            Events.METADATA_ANALYSIS_STARTED,
+            Events.METADATA_ANALYSIS_FINISHED, Events.FILE_SELECTED,
+            Events.FILE_DESELECTED, Events.TRANSFER_STARTED,
+            Events.TRANSFER_FAILED, Events.TRANSFER_DONE
+        ),
+        printjob=(
+            Events.PRINT_STARTED, Events.PRINT_FAILED, Events.PRINT_DONE,
+            Events.PRINT_CANCELLED, Events.PRINT_PAUSED, Events.PRINT_RESUMED
+        ),
+        gcode=(
+            Events.POWER_ON, Events.POWER_OFF, Events.HOME, Events.Z_CHANGE,
+            Events.DWELL, Events.WAITING, Events.COOLING, Events.ALERT,
+            Events.CONVEYOR, Events.EJECT, Events.E_STOP,
+            Events.POSITION_UPDATE, Events.TOOL_CHANGE
+        ),
+        timelapse=(
+            Events.CAPTURE_START, Events.CAPTURE_FAILED, Events.CAPTURE_DONE,
+            Events.MOVIE_RENDERING, Events.MOVIE_FAILED, Events.MOVIE_FAILED
+        ),
+        slicing=(
+            Events.SLICING_STARTED, Events.SLICING_DONE,
+            Events.SLICING_CANCELLED, Events.SLICING_FAILED,
+            Events.SLICING_PROFILE_ADDED, Events.SLICING_PROFILE_DELETED,
+            Events.SLICING_PROFILE_MODIFIED
+        ),
+        settings=(Events.SETTINGS_UPDATED,)
+    )
 
     LWT_CONNECTED = "connected"
     LWT_DISCONNECTED = "disconnected"
@@ -68,32 +82,32 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         self._printer.register_callback(self)
 
         if self._settings.get(["broker", "url"]) is None:
-            self._logger.error("No broker URL defined, MQTT plugin won't be able to work")
+            self._logger.error(
+                "No broker URL defined, MQTT plugin won't be able to work"
+            )
             return False
 
-    ##~~ TemplatePlugin API
+    # ~~ TemplatePlugin API
 
     def get_template_configs(self):
-        return [
-            dict(type="settings", name="MQTTAWS")
-        ]
+        return [dict(type="settings", name="MQTTAWS")]
 
-    ##~~ AssetPlugin API
+    # ~~ AssetPlugin API
 
     def get_assets(self):
         return dict(js=["js/mqttaws.js"])
 
-    ##~~ StartupPlugin API
+    # ~~ StartupPlugin API
 
     def on_startup(self, host, port):
         self.mqtt_connect()
 
-    ##~~ ShutdownPlugin API
+    # ~~ ShutdownPlugin API
 
     def on_shutdown(self):
         self.mqtt_disconnect(force=True)
 
-    ##~~ SettingsPlugin API
+    # ~~ SettingsPlugin API
 
     def get_settings_defaults(self):
         return dict(
@@ -111,27 +125,25 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             ),
             publish=dict(
                 baseTopic="octoprint/",
-
                 eventTopic="event/{event}",
                 eventActive=True,
                 printerData=False,
-                events=dict(server=True,
-                            comm=True,
-                            files=True,
-                            printjob=True,
-                            gcode=True,
-                            timelapse=True,
-                            slicing=True,
-                            settings=True,
-                            unclassified=True),
-
+                events=dict(
+                    server=True,
+                    comm=True,
+                    files=True,
+                    printjob=True,
+                    gcode=True,
+                    timelapse=True,
+                    slicing=True,
+                    settings=True,
+                    unclassified=True
+                ),
                 progressTopic="progress/{progress}",
                 progressActive=True,
-
                 temperatureTopic="temperature/{temp}",
                 temperatureActive=True,
                 temperatureThreshold=0.1,
-
                 lwTopic="mqtt",
                 lwActive=True
             )
@@ -149,17 +161,22 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         new_lw_topic = self._get_topic("lw")
 
         broker_diff = dict_minimal_mergediff(old_broker_data, new_broker_data)
-        lw_diff = dict_minimal_mergediff(dict(lw_active=old_lw_active,
-                                              lw_topic=old_lw_topic),
-                                         dict(lw_active=new_lw_active,
-                                              lw_topic=new_lw_topic))
+        lw_diff = dict_minimal_mergediff(
+            dict(lw_active=old_lw_active, lw_topic=old_lw_topic),
+            dict(lw_active=new_lw_active, lw_topic=new_lw_topic)
+        )
         if len(broker_diff) or len(lw_diff):
             # something changed
-            self._logger.info("Settings changed (broker_diff={!r}, lw_diff={!r}), reconnecting to broker".format(broker_diff, lw_diff))
-            self.mqtt_disconnect(force=True, incl_lwt=old_lw_active, lwt=old_lw_topic)
+            self._logger.info(
+                "Settings changed (broker_diff={!r}, lw_diff={!r}), "
+                "reconnecting to broker".format(broker_diff, lw_diff)
+            )
+            self.mqtt_disconnect(
+                force=True, incl_lwt=old_lw_active, lwt=old_lw_topic
+            )
             self.mqtt_connect()
 
-    ##~~ EventHandlerPlugin API
+    # ~~ EventHandlerPlugin API
 
     def on_event(self, event, payload):
         if event == Events.PRINT_STARTED:
@@ -180,59 +197,76 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 else:
                     data = dict(payload)
                 data["_event"] = event
-                self.mqtt_publish_with_timestamp(topic.format(event=event), data)
+                self.mqtt_publish_with_timestamp(
+                    topic.format(event=event), data
+                )
 
-    ##~~ ProgressPlugin API
+    # ~~ ProgressPlugin API
 
     def on_print_progress(self, storage, path, progress):
         topic = self._get_topic("progress")
 
         if topic:
-            data = dict(location=storage,
-                        path=path,
-                        progress=progress)
+            data = dict(location=storage, path=path, progress=progress)
 
             if self._settings.get_boolean(["publish", "printerData"]):
                 data['printer_data'] = self._printer.get_current_data()
 
-            self.mqtt_publish_with_timestamp(topic.format(progress="printing"), data, retained=True)
+            self.mqtt_publish_with_timestamp(
+                topic.format(progress="printing"), data, retained=True
+            )
 
-    def on_slicing_progress(self, slicer, source_location, source_path, destination_location, destination_path, progress):
+    def on_slicing_progress(
+            self, slicer, source_location, source_path, destination_location,
+            destination_path, progress
+    ):
         topic = self._get_topic("progress")
 
         if topic:
-            data = dict(slicer=slicer,
-                        source_location=source_location,
-                        source_path=source_path,
-                        destination_location=destination_location,
-                        destination_path=destination_path,
-                        progress=progress)
-            self.mqtt_publish_with_timestamp(topic.format(progress="slicing"), data, retained=True)
+            data = dict(
+                slicer=slicer,
+                source_location=source_location,
+                source_path=source_path,
+                destination_location=destination_location,
+                destination_path=destination_path,
+                progress=progress
+            )
+            self.mqtt_publish_with_timestamp(
+                topic.format(progress="slicing"), data, retained=True
+            )
 
-    ##~~ PrinterCallback
+    # ~~ PrinterCallback
 
     def on_printer_add_temperature(self, data):
         topic = self._get_topic("temperature")
-        threshold = self._settings.get_float(["publish", "temperatureThreshold"])
+        threshold = self._settings.get_float([
+            "publish", "temperatureThreshold"
+        ])
 
         if topic:
             for key, value in data.items():
                 if key == "time":
                     continue
 
-                if key not in self.lastTemp \
-                        or abs(value["actual"] - self.lastTemp[key]["actual"]) >= threshold \
-                        or value["target"] != self.lastTemp[key]["target"]:
-                    # unknown key, new actual or new target -> update mqtt topic!
-                    dataset = dict(actual=value["actual"],
-                                   target=value["target"])
-                    self.mqtt_publish_with_timestamp(topic.format(temp=key), dataset,
-                                                     retained=True,
-                                                     allow_queueing=True,
-                                                     timestamp=data["time"])
-                    self.lastTemp.update({key:data[key]})
+                if (key not in self.lastTemp
+                        or abs(value["actual"] - self.lastTemp[key]["actual"])
+                        >= threshold
+                        or value["target"] != self.lastTemp[key]["target"]):
+                    # unknown key,
+                    # new actual or new target -> update mqtt topic!
+                    dataset = dict(
+                        actual=value["actual"], target=value["target"]
+                    )
+                    self.mqtt_publish_with_timestamp(
+                        topic.format(temp=key),
+                        dataset,
+                        retained=True,
+                        allow_queueing=True,
+                        timestamp=data["time"]
+                    )
+                    self.lastTemp.update({key: data[key]})
 
-    ##~~ Softwareupdate hook
+    # ~~ Softwareupdate hook
 
     def get_update_information(self):
         return dict(
@@ -247,20 +281,28 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 current=self._plugin_version,
 
                 # update method: pip
-                pip="https://github.com/bwysocki/OctoPrint-MQTT/archive/{target_version}.zip"
+                pip=(
+                    "https://github.com/bwysocki/OctoPrint-MQTT/"
+                    "archive/{target_version}.zip"
+                )
             )
         )
 
-    ##~~ helpers
+    # ~~ helpers
 
     def logCallback(self, client, userdata, message):
-        self._logger.info('Incomming message {message} from topic {topic}'.format(message=message.payload, topic=message.topic))
-
+        self._logger.info(
+            'Incomming message {message} from topic {topic}'.format(
+                message=message.payload, topic=message.topic
+            )
+        )
 
     def mqtt_connect(self):
         if not self._mqtt_connected:
             accessKey = self._settings.get(["broker", "awsaccesskey"])
-            secretAccessKey = self._settings.get(["broker", "secretawsaccesskey"])
+            secretAccessKey = self._settings.get([
+                "broker", "secretawsaccesskey"
+            ])
 
             if (not accessKey or not secretAccessKey):
                 return
@@ -273,7 +315,6 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             rootCAPath = broker_tls.get('ca_certs')
             port = 443
             clientId = self._settings.get(["publish", "baseTopic"])
-            topic = self._get_topic("lw")
 
             myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
 
@@ -286,19 +327,26 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
                 proxy = proxyEnv.strip().split(":")
                 proxyHost = str(proxy[0])
                 proxyPort = int(proxy[1])
-                self._logger.info('MQTTAWS started with proxy: {proxyHost}:{proxyPort}'.format(proxyPort=proxyPort, proxyHost=proxyHost))
-                socks.setdefaultproxy(socks.PROXY_TYPE_HTTP, proxyHost, proxyPort)
+                self._logger.info(
+                    'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
+                    .format(proxyPort=proxyPort, proxyHost=proxyHost)
+                )
+                socks.setdefaultproxy(
+                    socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
+                )
                 self._proxySocket = socket.socket
                 self._proxySocksSocket = socks.socksocket
                 socket.socket = socks.socksocket
-                os.environ['NO_PROXY'] = 'localhost,127.0.0.0,127.0.1.1,127.0.0.1,local.home';
+                os.environ['NO_PROXY'] = 'localhost,127.0.0.0,127.0.1.1,127.0.0.1,local.home'
 
             myAWSIoTMQTTClient.configureEndpoint(host, port)
             myAWSIoTMQTTClient.configureCredentials(rootCAPath)
 
             # AWSIoTMQTTClient connection configuration
             myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
-            myAWSIoTMQTTClient.configureOfflinePublishQueueing(-1)  # Infinite offline Publish queueing
+            myAWSIoTMQTTClient.configureOfflinePublishQueueing(
+                -1
+            )  # Infinite offline Publish queueing
             myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
             myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
             myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
@@ -309,7 +357,7 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
 
             try:
               myAWSIoTMQTTClient.connect()
-              self._mqtt = myAWSIoTMQTTClient;
+              self._mqtt = myAWSIoTMQTTClient
             except:
               self.mqtt_connect()
 
@@ -322,11 +370,21 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             if lwt is None:
                 lwt = self._get_topic("lw")
             if lwt:
-                self._mqtt.publish(topic=lwt, payload=self.LWT_DISCONNECTED, QoS=1)
+                self._mqtt.publish(
+                    topic=lwt, payload=self.LWT_DISCONNECTED, QoS=1
+                )
 
         self._mqtt.disconnect()
 
-    def mqtt_publish_with_timestamp(self, topic, payload, retained=False, qos=0, allow_queueing=False, timestamp=None):
+    def mqtt_publish_with_timestamp(
+            self,
+            topic,
+            payload,
+            retained=False,
+            qos=0,
+            allow_queueing=False,
+            timestamp=None
+    ):
         if not payload:
             payload = dict()
         if not isinstance(payload, dict):
@@ -335,20 +393,35 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
         if timestamp is None:
             timestamp = time.time()
         payload["_timestamp"] = int(timestamp)
-        return self.mqtt_publish(topic, payload, retained=retained, qos=qos, allow_queueing=allow_queueing)
+        return self.mqtt_publish(
+            topic,
+            payload,
+            retained=retained,
+            qos=qos,
+            allow_queueing=allow_queueing
+        )
 
-    def mqtt_publish(self, topic, payload, retained=False, qos=0, allow_queueing=False):
+    def mqtt_publish(
+            self, topic, payload, retained=False, qos=0, allow_queueing=False
+    ):
         if not isinstance(payload, basestring):
             payload = json.dumps(payload)
         if not self._mqtt_connected:
             if allow_queueing:
-                self._logger.debug("Not connected, enqueuing message: {topic} - {payload}".format(**locals()))
-                self._mqtt_publish_queue.append((topic, payload, retained, qos))
+                self._logger.debug(
+                    "Not connected, enqueuing message: {topic} - {payload}"
+                    .format(**locals())
+                )
+                self._mqtt_publish_queue.append(
+                    (topic, payload, retained, qos)
+                )
                 return True
             else:
                 return False
         self._mqtt.publish(topic, payload=payload, QoS=qos)
-        self._logger.info("Sent message: {topic} - {payload}".format(**locals()))
+        self._logger.info(
+            "Sent message: {topic} - {payload}".format(**locals())
+        )
         return True
 
     def mqtt_subscribe(self, topic, callback, args=None, kwargs=None):
@@ -364,35 +437,42 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             self._mqtt.subscribe(topic, 1, self.logCallback)
 
     def mqtt_unsubscribe(self, callback, topic=None):
-        subbed_topics = [subbed_topic for subbed_topic, subbed_callback, _, _ in self._mqtt_subscriptions if callback == subbed_callback and (topic is None or topic == subbed_topic)]
+        subbed_topics = [
+            subbed_topic
+            for subbed_topic, subbed_callback, _, _ in self._mqtt_subscriptions
+            if callback == subbed_callback and
+            (topic is None or topic == subbed_topic)
+        ]
 
         def remove_sub(entry):
             subbed_topic, subbed_callback, _, _ = entry
-            return not (callback == subbed_callback and (topic is None or subbed_topic == topic))
+            return not (
+                callback == subbed_callback and
+                (topic is None or subbed_topic == topic)
+            )
 
         self._mqtt_subscriptions = filter(remove_sub, self._mqtt_subscriptions)
 
         if self._mqtt_connected and subbed_topics:
             self._mqtt.unsubscribe(*subbed_topics)
 
-    ##~~ mqtt client callbacks
+    # ~~ mqtt client callbacks
 
     def _on_mqtt_connect(self):
         self._logger.info("Printer gets connection")
-        #if self._mqtt_publish_queue:
-        #    try:
-        #        while True:
-        #            topic, payload, retained, qos = self._mqtt_publish_queue.popleft()
-        #            self._mqtt.publish(topic, payload=payload, QoS=qos)
-        #    except IndexError:
-        #        # that's ok, queue is just empty
-        #        pass
-        #subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
-        #if subbed_topics:
-        #    self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
+        # noqa if self._mqtt_publish_queue:
+        # noqa     try:
+        # noqa         while True:
+        # noqa             topic, payload, retained, qos = self._mqtt_publish_queue.popleft()
+        # noqa             self._mqtt.publish(topic, payload=payload, QoS=qos)
+        # noqa     except IndexError:
+        # noqa         # that's ok, queue is just empty
+        # noqa         pass
+        # noqa subbed_topics = list(map(lambda t: (t, 0), {topic for topic, _, _, _ in self._mqtt_subscriptions}))
+        # noqa if subbed_topics:
+        # noqa     self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
         self._mqtt_connected = True
         self.mqtt_connect()
-
 
     def _on_mqtt_disconnect(self):
         self._logger.info("Printer lost connection")
@@ -404,14 +484,14 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
             topic, callback, args, kwargs = subscription
             if topic_matches_sub(topic, msg.topic):
                 args = [msg.topic, msg.payload] + args
-                kwargs.update(dict(client=None, userdata=None, message = msg))
+                kwargs.update(dict(client=None, userdata=None, message=msg))
                 try:
                     if (self._proxySocket):
                         socket.socket = self._proxySocket
                     callback(*args, **kwargs)
                     if (self._proxySocksSocket):
                         socket.socket = self._proxySocksSocket
-                except:
+                except Exception:
                     self._logger.exception("Error while calling mqtt callback")
 
     def _get_topic(self, topic_type):
@@ -425,11 +505,16 @@ class MqttAWSPlugin(octoprint.plugin.SettingsPlugin,
     def _is_event_active(self, event):
         for event_class, events in self.EVENT_CLASS_TO_EVENT_LIST.items():
             if event in events:
-                return self._settings.get_boolean(["publish", "events", event_class])
-        return self._settings.get_boolean(["publish", "events", "unclassified"])
+                return self._settings.get_boolean([
+                    "publish", "events", event_class
+                ])
+        return self._settings.get_boolean([
+            "publish", "events", "unclassified"
+        ])
 
 
 __plugin_name__ = "MQTTAWS"
+
 
 def __plugin_load__():
     plugin = MqttAWSPlugin()
@@ -447,5 +532,6 @@ def __plugin_load__():
 
     global __plugin_hooks__
     __plugin_hooks__ = {
-        "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+        "octoprint.plugin.softwareupdate.check_config":
+        __plugin_implementation__.get_update_information
     }

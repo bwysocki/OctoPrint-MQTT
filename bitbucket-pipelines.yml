@@ -2,14 +2,16 @@ image: python:2.7.13
 
 pipelines:
   default:
-    # - step:
-    #     name: Testing
-    #     caches:
-    #       - pip
-    #     script:
-    #       - pip install git+https://github.com/foosel/OctoPrint.git
-    #       - pip install .[dev]
-    #       - pytest --cov=octoprint_mqtt_controls tests/
+    - step:
+        name: Testing
+        caches:
+          - pip
+        script:
+          - pip install git+https://github.com/foosel/OctoPrint.git
+          - pip install .[dev]
+          # - pytest --cov=octoprint_mqtt_controls tests/
+          - flake8
+          - echo "Add tests!"
     - step:
         name: Push Package
         trigger: manual
