@@ -10,7 +10,7 @@ import os
 import socket
 import socks
 import requests
-
+import threading
 import octoprint.plugin
 
 from octoprint.events import Events
@@ -312,11 +312,9 @@ class MqttAWSPlugin(
             self._logger.info("Checking ping: {ping}".format(ping=ping))
 
             if (ping is not None and ping.status_code != 500):
-                time.sleep(30)
-                self.mqtt_connect()
+                threading.Timer(30, self.mqtt_connect.start()
             else:
-                time.sleep(30)
-                self.mqtt_connect()
+                threading.Timer(30, self.mqtt_connect.start()
 
 
     def mqtt_disconnect(self, force=False, incl_lwt=True, lwt=None):
