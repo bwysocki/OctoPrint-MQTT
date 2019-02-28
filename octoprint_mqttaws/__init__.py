@@ -9,7 +9,8 @@ from collections import deque
 import os
 import socket
 import socks
-
+import requests
+import threading
 import octoprint.plugin
 
 from octoprint.events import Events
@@ -299,65 +300,79 @@ class MqttAWSPlugin(
 
     def mqtt_connect(self):
         if not self._mqtt_connected:
-            accessKey = self._settings.get(["broker", "awsaccesskey"])
-            secretAccessKey = self._settings.get([
-                "broker", "secretawsaccesskey"
-            ])
-
-            if (not accessKey or not secretAccessKey):
-                return
-
-            os.environ["AWS_ACCESS_KEY_ID"] = accessKey
-            os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
-
-            broker_tls = self._settings.get(["broker", "tls"], asdict=True)
             host = self._settings.get(["broker", "url"])
-            rootCAPath = broker_tls.get('ca_certs')
-            port = 443
-            clientId = self._settings.get(["publish", "baseTopic"])
 
-            myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+            ping = None
+            try:
+                self._logger.info("Checking ping...")
+                ping = requests.get("https://" + host)
+            except:
+                self._logger.info("Ping fail. Waiting 30s")
 
-            env = os.environ.copy()
-            proxy = env.get("http_proxy", None)
-            self._logger.info(env)
-            self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
-            if proxy:
-                proxyEnv = proxy.replace("http://", "").replace("https://", "")
-                proxy = proxyEnv.strip().split(":")
-                proxyHost = str(proxy[0])
-                proxyPort = int(proxy[1])
-                self._logger.info(
-                    'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
-                    .format(proxyPort=proxyPort, proxyHost=proxyHost)
-                )
-                socks.setdefaultproxy(
-                    socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
-                )
-                self._proxySocket = socket.socket
-                self._proxySocksSocket = socks.socksocket
-                socket.socket = socks.socksocket
-                os.environ['NO_PROXY'] = 'localhost'
+            self._logger.info("Checking ping: {ping}".format(ping=ping))
 
-            myAWSIoTMQTTClient.configureEndpoint(host, port)
-            myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+            if (ping is not None and ping.status_code != 500):
+                accessKey = self._settings.get(["broker", "awsaccesskey"])
+                secretAccessKey = self._settings.get([
+                    "broker", "secretawsaccesskey"
+                ])
 
-            # AWSIoTMQTTClient connection configuration
-            myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
-            myAWSIoTMQTTClient.configureOfflinePublishQueueing(
-                -1
-            )  # Infinite offline Publish queueing
-            myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-            myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
-            myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+                if (not accessKey or not secretAccessKey):
+                    return
 
-            myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
-            myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
-            myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+                os.environ["AWS_ACCESS_KEY_ID"] = accessKey
+                os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
 
-            myAWSIoTMQTTClient.connect()
+                broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+                rootCAPath = broker_tls.get('ca_certs')
+                port = 443
+                clientId = self._settings.get(["publish", "baseTopic"])
 
-            self._mqtt = myAWSIoTMQTTClient
+                myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+
+                env = os.environ.copy()
+                proxy = env.get("http_proxy", None)
+                self._logger.info(env)
+                self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
+                if proxy:
+                    proxyEnv = proxy.replace("http://", "").replace("https://", "")
+                    proxy = proxyEnv.strip().split(":")
+                    proxyHost = str(proxy[0])
+                    proxyPort = int(proxy[1])
+                    self._logger.info(
+                        'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
+                        .format(proxyPort=proxyPort, proxyHost=proxyHost)
+                    )
+                    socks.setdefaultproxy(
+                        socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
+                    )
+                    self._proxySocket = socket.socket
+                    self._proxySocksSocket = socks.socksocket
+                    socket.socket = socks.socksocket
+                    os.environ['NO_PROXY'] = 'localhost'
+
+                myAWSIoTMQTTClient.configureEndpoint(host, port)
+                myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+
+                # AWSIoTMQTTClient connection configuration
+                myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
+                myAWSIoTMQTTClient.configureOfflinePublishQueueing(
+                    -1
+                )  # Infinite offline Publish queueing
+                myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+                myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
+                myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+
+                myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
+                myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
+                myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+
+                myAWSIoTMQTTClient.connect()
+
+                self._mqtt = myAWSIoTMQTTClient
+            else:
+                threading.Timer(30, self.mqtt_connect).start()
+
 
     def mqtt_disconnect(self, force=False, incl_lwt=True, lwt=None):
         if self._mqtt is None:
