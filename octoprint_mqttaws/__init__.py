@@ -300,77 +300,82 @@ class MqttAWSPlugin(
 
     def mqtt_connect(self):
         if not self._mqtt_connected:
-            host = self._settings.get(["broker", "url"])
-
-            ping = None
             try:
-                self._logger.info("Checking ping...")
-                ping = requests.get("https://" + host)
-            except:
-                self._logger.info("Ping fail. Waiting 30s")
+                host = self._settings.get(["broker", "url"])
 
-            self._logger.info("Checking ping: {ping}".format(ping=ping))
+                ping = None
+                try:
+                    self._logger.info("Checking ping...")
+                    ping = requests.get("https://" + host)
+                except:
+                    self._logger.info("Ping fail. Waiting 30s")
 
-            if (ping is not None and ping.status_code != 500):
-                accessKey = self._settings.get(["broker", "awsaccesskey"])
-                secretAccessKey = self._settings.get([
-                    "broker", "secretawsaccesskey"
-                ])
+                self._logger.info("Checking ping: {ping}".format(ping=ping))
 
-                if (not accessKey or not secretAccessKey):
-                    return
+                if (ping is not None and ping.status_code != 500):
+                    accessKey = self._settings.get(["broker", "awsaccesskey"])
+                    secretAccessKey = self._settings.get([
+                        "broker", "secretawsaccesskey"
+                    ])
 
-                os.environ["AWS_ACCESS_KEY_ID"] = accessKey
-                os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
+                    if (not accessKey or not secretAccessKey):
+                        return
 
-                broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-                rootCAPath = broker_tls.get('ca_certs')
-                port = 443
-                clientId = self._settings.get(["publish", "baseTopic"])
+                    os.environ["AWS_ACCESS_KEY_ID"] = accessKey
+                    os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
 
-                myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+                    broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+                    rootCAPath = broker_tls.get('ca_certs')
+                    port = 443
+                    clientId = self._settings.get(["publish", "baseTopic"])
 
-                env = os.environ.copy()
-                proxy = env.get("http_proxy", None)
-                self._logger.info(env)
-                self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
-                if proxy:
-                    proxyEnv = proxy.replace("http://", "").replace("https://", "")
-                    proxy = proxyEnv.strip().split(":")
-                    proxyHost = str(proxy[0])
-                    proxyPort = int(proxy[1])
-                    self._logger.info(
-                        'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
-                        .format(proxyPort=proxyPort, proxyHost=proxyHost)
-                    )
-                    socks.setdefaultproxy(
-                        socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
-                    )
-                    self._proxySocket = socket.socket
-                    self._proxySocksSocket = socks.socksocket
-                    socket.socket = socks.socksocket
-                    os.environ['NO_PROXY'] = 'localhost'
+                    myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
 
-                myAWSIoTMQTTClient.configureEndpoint(host, port)
-                myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+                    env = os.environ.copy()
+                    proxy = env.get("http_proxy", None)
+                    self._logger.info(env)
+                    self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
+                    if proxy:
+                        proxyEnv = proxy.replace("http://", "").replace("https://", "")
+                        proxy = proxyEnv.strip().split(":")
+                        proxyHost = str(proxy[0])
+                        proxyPort = int(proxy[1])
+                        self._logger.info(
+                            'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
+                            .format(proxyPort=proxyPort, proxyHost=proxyHost)
+                        )
+                        socks.setdefaultproxy(
+                            socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
+                        )
+                        self._proxySocket = socket.socket
+                        self._proxySocksSocket = socks.socksocket
+                        socket.socket = socks.socksocket
+                        os.environ['NO_PROXY'] = 'localhost'
 
-                # AWSIoTMQTTClient connection configuration
-                myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
-                myAWSIoTMQTTClient.configureOfflinePublishQueueing(
-                    -1
-                )  # Infinite offline Publish queueing
-                myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-                myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
-                myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
+                    myAWSIoTMQTTClient.configureEndpoint(host, port)
+                    myAWSIoTMQTTClient.configureCredentials(rootCAPath)
 
-                myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
-                myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
-                myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+                    # AWSIoTMQTTClient connection configuration
+                    myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
+                    myAWSIoTMQTTClient.configureOfflinePublishQueueing(
+                        -1
+                    )  # Infinite offline Publish queueing
+                    myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+                    myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
+                    myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
 
-                myAWSIoTMQTTClient.connect()
+                    myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
+                    myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
+                    myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
 
-                self._mqtt = myAWSIoTMQTTClient
-            else:
+                    myAWSIoTMQTTClient.connect()
+
+                    self._mqtt = myAWSIoTMQTTClient
+                else:
+                    threading.Timer(30, self.mqtt_connect).start()
+            except Exception as e:
+                self._logger.info(e)
+                self._logger.info("Can not connect to broker = waiting 30s")
                 threading.Timer(30, self.mqtt_connect).start()
 
 
