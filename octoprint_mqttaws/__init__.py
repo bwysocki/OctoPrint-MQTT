@@ -103,6 +103,12 @@ class MqttAWSPlugin(
     def on_startup(self, host, port):
         self.mqtt_connect()
 
+    def get_sorting_key(self, context):
+        if context == "StartupPlugin.on_startup":
+            return 50 # must be less than on_startup sorting key of MQTT Controls plugin
+        else:
+            return None
+
     # ~~ ShutdownPlugin API
 
     def on_shutdown(self):
@@ -283,7 +289,7 @@ class MqttAWSPlugin(
 
                 # update method: pip
                 pip=(
-                    "https://github.com/bwysocki/OctoPrint-MQTT/"
+                    "https://github.com/bwysocki/OctoPrint-MQTT/" # TODO this is wrong for sure
                     "archive/{target_version}.zip"
                 )
             )
@@ -476,7 +482,7 @@ class MqttAWSPlugin(
     # ~~ mqtt client callbacks
 
     def _on_mqtt_connect(self):
-        self._logger.info("Printer gets connection")
+        self._logger.info("Connected to MQTT broker")
         # noqa if self._mqtt_publish_queue:
         # noqa     try:
         # noqa         while True:
@@ -492,7 +498,7 @@ class MqttAWSPlugin(
         self.mqtt_connect()
 
     def _on_mqtt_disconnect(self):
-        self._logger.info("Printer lost connection")
+        self._logger.info("Lost connection to MQTT broker")
         self._mqtt_connected = False
 
     def _on_mqtt_message(self, msg):
@@ -530,7 +536,7 @@ class MqttAWSPlugin(
         ])
 
 
-__plugin_name__ = "MQTTAWS"
+__plugin_name__ = "MQTT AWS"
 
 
 def __plugin_load__():

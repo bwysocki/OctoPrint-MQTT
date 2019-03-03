@@ -33,13 +33,13 @@ plugin_version = "0.8.2"
 # internal data via __plugin_description__ in the plugin module
 plugin_description = (
     "An OctoPrint Plugin that adds to OctoPrint support "
-    "for MQTT with AWS IOT brokers."
+    "for MQTT with AWS IoT brokers."
 )
 
 # The plugin's author.
 # Can be overwritten within OctoPrint's internal data via
 # __plugin_author__ in the plugin module
-plugin_author = "Gina H�u�ge Bartosz Wysocki"
+plugin_author = "Gina Häußge Bartosz Wysocki"
 
 # The plugin's author's mail address.
 plugin_author_email = "gina@octoprint.org"
@@ -57,7 +57,6 @@ plugin_license = "AGPLv3"
 # Any additional requirements besides OctoPrint should be listed here
 plugin_requires = [
     "OctoPrint>=1.3.5",
-    "paho-mqtt",
     "AWSIoTPythonSDK",
     "PySocks",
     "httplib2",
