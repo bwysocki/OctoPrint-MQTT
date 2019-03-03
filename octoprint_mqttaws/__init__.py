@@ -77,7 +77,7 @@ class MqttAWSPlugin(
 
         self.lastTemp = {}
         self._proxySocket = None
-        self._proxySocksSocket = None
+        self._proxySockSocket = None
 
     def initialize(self):
         self._printer.register_callback(self)
@@ -100,14 +100,15 @@ class MqttAWSPlugin(
 
     # ~~ StartupPlugin API
 
-    def on_startup(self, host, port):
-        self.mqtt_connect()
-
     def get_sorting_key(self, context):
         if context == "StartupPlugin.on_startup":
             return 50 # must be less than on_startup sorting key of MQTT Controls plugin
         else:
             return None
+
+    def on_after_startup(self):
+        # starting up the MQTT client is a blocking operation, so don't immediately try to start up the MQTT client; instead, give other plugins a chance to get started and then go for it
+        threading.Timer(10, self.mqtt_connect).start()
 
     # ~~ ShutdownPlugin API
 
@@ -305,84 +306,117 @@ class MqttAWSPlugin(
         )
 
     def mqtt_connect(self):
+        self.unMonkeyPatchSocketWithDefaultProxy()
+        self.setup_client()
+
         if not self._mqtt_connected:
             try:
                 host = self._settings.get(["broker", "url"])
-
-                ping = None
+                check_conn = None
                 try:
-                    self._logger.info("Checking ping...")
-                    ping = requests.get("https://" + host)
+                    self._logger.info("Checking connection...")
+                    check_conn = requests.get("https://" + host, timeout=5.0)
                 except:
-                    self._logger.info("Ping fail. Waiting 30s")
+                    self._logger.info("Connection check failed; waiting 30s")
 
-                self._logger.info("Checking ping: {ping}".format(ping=ping))
+                self._logger.debug("Connection check result: {check_conn}".format(check_conn=check_conn))
 
-                if (ping is not None and ping.status_code != 500):
-                    accessKey = self._settings.get(["broker", "awsaccesskey"])
-                    secretAccessKey = self._settings.get([
-                        "broker", "secretawsaccesskey"
-                    ])
-
-                    if (not accessKey or not secretAccessKey):
-                        return
-
-                    os.environ["AWS_ACCESS_KEY_ID"] = accessKey
-                    os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
-
-                    broker_tls = self._settings.get(["broker", "tls"], asdict=True)
-                    rootCAPath = broker_tls.get('ca_certs')
-                    port = 443
-                    clientId = self._settings.get(["publish", "baseTopic"])
-
-                    myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
-
-                    env = os.environ.copy()
-                    proxy = env.get("http_proxy", None)
-                    self._logger.info(env)
-                    self._logger.info("Checking proxy: {proxy}".format(proxy=proxy))
-                    if proxy:
-                        proxyEnv = proxy.replace("http://", "").replace("https://", "")
-                        proxy = proxyEnv.strip().split(":")
-                        proxyHost = str(proxy[0])
-                        proxyPort = int(proxy[1])
-                        self._logger.info(
-                            'MQTTAWS started with proxy: {proxyHost}:{proxyPort}'
-                            .format(proxyPort=proxyPort, proxyHost=proxyHost)
-                        )
-                        socks.setdefaultproxy(
-                            socks.PROXY_TYPE_HTTP, proxyHost, proxyPort
-                        )
-                        self._proxySocket = socket.socket
-                        self._proxySocksSocket = socks.socksocket
-                        socket.socket = socks.socksocket
-                        os.environ['NO_PROXY'] = 'localhost'
-
-                    myAWSIoTMQTTClient.configureEndpoint(host, port)
-                    myAWSIoTMQTTClient.configureCredentials(rootCAPath)
-
-                    # AWSIoTMQTTClient connection configuration
-                    myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
-                    myAWSIoTMQTTClient.configureOfflinePublishQueueing(
-                        -1
-                    )  # Infinite offline Publish queueing
-                    myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
-                    myAWSIoTMQTTClient.configureConnectDisconnectTimeout(100)  # 10 sec
-                    myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 sec
-
-                    myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
-                    myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
-                    myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
-
-                    myAWSIoTMQTTClient.connect()
-
-                    self._mqtt = myAWSIoTMQTTClient
+                if (check_conn is not None and check_conn.status_code >= 200):
+                    self.monkeyPatchSocketWithDefaultProxy()
+                    self._logger.info("Connecting to broker...")
+                    self._mqtt.connect()
                 else:
                     threading.Timer(30, self.mqtt_connect).start()
             except Exception as e:
                 self._logger.info(e)
-                self._logger.info("Can not connect to broker = waiting 30s")
+                self._logger.info("Failed to connect to broker; waiting 30s")
+                self.unMonkeyPatchSocketWithDefaultProxy()
                 threading.Timer(30, self.mqtt_connect).start()
+
+
+    def setup_client(self):
+        if self._mqtt is None:
+            accessKey = self._settings.get(["broker", "awsaccesskey"])
+            secretAccessKey = self._settings.get([
+                "broker", "secretawsaccesskey"
+            ])
+
+            if (not accessKey or not secretAccessKey):
+                return
+
+            os.environ["AWS_ACCESS_KEY_ID"] = accessKey
+            os.environ["AWS_SECRET_ACCESS_KEY"] = secretAccessKey
+
+            clientId = self._settings.get(["publish", "baseTopic"])
+            host = self._settings.get(["broker", "url"])
+            port = 443
+            broker_tls = self._settings.get(["broker", "tls"], asdict=True)
+            rootCAPath = broker_tls.get('ca_certs')
+
+            # NOTE it's critical that the AWSIoTMQTTClient is constructed _before_ the socket is monkey patched with the default proxy, otherwise Paho (the MQTT client) just blocks when trying to connect to 127.0.0.1
+            myAWSIoTMQTTClient = AWSIoTMQTTClient(clientId, useWebsocket=True)
+
+            myAWSIoTMQTTClient.configureEndpoint(host, port)
+            myAWSIoTMQTTClient.configureCredentials(rootCAPath)
+
+            # AWSIoTMQTTClient connection configuration
+            myAWSIoTMQTTClient.configureAutoReconnectBackoffTime(1, 3200, 20)
+            myAWSIoTMQTTClient.configureOfflinePublishQueueing(
+                -1
+            )  # Infinite offline Publish queueing
+            myAWSIoTMQTTClient.configureDrainingFrequency(2)  # Draining: 2 Hz
+            myAWSIoTMQTTClient.configureConnectDisconnectTimeout(30)  # 30 seconds
+            myAWSIoTMQTTClient.configureMQTTOperationTimeout(5)  # 5 seconds
+
+            myAWSIoTMQTTClient.onOffline = self._on_mqtt_disconnect
+            myAWSIoTMQTTClient.onOnline = self._on_mqtt_connect
+            myAWSIoTMQTTClient.onMessage = self._on_mqtt_message
+
+            self._mqtt = myAWSIoTMQTTClient
+
+
+    def monkeyPatchSocketWithDefaultProxy(self):
+        proxy = os.environ.get("http_proxy")
+        self._logger.debug("Checking proxy: {proxy}".format(proxy=proxy))
+        if proxy:
+            proxyEnv = proxy.replace("http://", "").replace("https://", "")
+            proxyParts = proxyEnv.strip().split("@")
+
+            if len(proxyParts) == 2:
+                proxyServerParts = proxyParts[1].split(":")
+                proxyAuthParts = proxyParts[0].split(":")
+                proxyUser = str(proxyAuthParts[0])
+                proxyPassword = str(proxyAuthParts[1])
+            else:
+                proxyServerParts = proxyParts[0].split(":")
+                proxyUser = None
+                proxyPassword = None
+
+            proxyHost = str(proxyServerParts[0])
+            if len(proxyServerParts) == 2:
+                proxyPort = int(proxyServerParts[1])
+            else:
+                proxyPort = 8080 # sane default; should never happen that we get an http_proxy env var without a port part though
+
+            self._logger.info(
+                'Proxy information for MQTT AWS - proxyHost: {proxyHost}; proxyPort: {proxyPort}; proxyUser: {proxyUser}; proxyPassword: {proxyPassword}'
+                .format(proxyHost=proxyHost, proxyPort=proxyPort, proxyUser=proxyUser, proxyPassword='********' if proxyPassword is not None else None)
+            )
+            socks.set_default_proxy(
+                proxy_type=socks.PROXY_TYPE_HTTP,
+                addr=proxyHost,
+                port=proxyPort,
+                username=proxyUser,
+                password=proxyPassword
+            )
+            self._proxySocket = socket.socket # save reference to old socket
+            self._proxySockSocket = socks.socksocket
+            socket.socket = socks.socksocket
+
+
+    def unMonkeyPatchSocketWithDefaultProxy(self):
+        if self._proxySocket is not None:
+            socket.socket = self._proxySocket
 
 
     def mqtt_disconnect(self, force=False, incl_lwt=True, lwt=None):
@@ -398,6 +432,7 @@ class MqttAWSPlugin(
                 )
 
         self._mqtt.disconnect()
+        self._mqtt_connected = False
 
     def mqtt_publish_with_timestamp(
             self,
@@ -495,11 +530,11 @@ class MqttAWSPlugin(
         # noqa if subbed_topics:
         # noqa     self._mqtt.subscribe(subbed_topics, 1, self.logCallback)
         self._mqtt_connected = True
-        self.mqtt_connect()
 
     def _on_mqtt_disconnect(self):
         self._logger.info("Lost connection to MQTT broker")
         self._mqtt_connected = False
+        # self.mqtt_connect() # FIXME will the mqtt client automatically reconnect or do we need to try to do that explicitly here?
 
     def _on_mqtt_message(self, msg):
         from paho.mqtt.client import topic_matches_sub
@@ -510,10 +545,10 @@ class MqttAWSPlugin(
                 kwargs.update(dict(client=None, userdata=None, message=msg))
                 try:
                     if (self._proxySocket):
-                        socket.socket = self._proxySocket
+                        socket.socket = self._proxySocket # TODO why are we setting socket.socket here?
                     callback(*args, **kwargs)
-                    if (self._proxySocksSocket):
-                        socket.socket = self._proxySocksSocket
+                    if (self._proxySockSocket):
+                        socket.socket = self._proxySockSocket # TODO why are we setting socket.socket here?
                 except Exception:
                     self._logger.exception("Error while calling mqtt callback")
 
