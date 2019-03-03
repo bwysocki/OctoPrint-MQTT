@@ -21,6 +21,6 @@ pipelines:
           - pip install awscli
           - apt update
           - apt install -y zip
-          - export PACKAGE=octoprint-wifi-conf.zip
-          - zip -r $PACKAGE . -x .git/ tests/ bitbucket-pipelines.yml $PACKAGE
+          - export PACKAGE=octoprint-mqttaws.zip
+          - zip -r $PACKAGE . -i octoprint_mqttaws/\\* README.md LICENSE setup.cfg setup.py
           - aws s3 cp $PACKAGE $PACKAGE_S3_URI
