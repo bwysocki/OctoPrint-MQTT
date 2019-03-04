@@ -489,10 +489,7 @@ class MqttAWSPlugin(
             kwargs = dict()
         self._mqtt_subscriptions.append((topic, callback, args, kwargs))
 
-        if not self._mqtt_connected:
-            self._mqtt_subscribe_queue.append(topic)
-        else:
-            self._mqtt.subscribe(topic, 1, self.logCallback)
+        self._mqtt.subscribe(topic, 1, self.logCallback)
 
     def mqtt_unsubscribe(self, callback, topic=None):
         subbed_topics = [
